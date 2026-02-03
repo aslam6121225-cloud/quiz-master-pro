@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Quizy Pro</title>
+    <link rel="stylesheet" href="src/styles/main.css">
+    <link rel="stylesheet" href="src/styles/dashboard.css">
+</head>
+
+<body class="dashboard">
+    <div class="dashboard-wrapper">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="workspace-selector">
+                <div class="workspace-info">
+                    <h4 id="user-display-name">Guest User</h4>
+                    <p>Professional Workspace</p>
+                </div>
+                <span>▼</span>
+            </div>
+
+            <nav class="nav-section">
+                <p class="nav-label">Overview</p>
+                <a href="#" class="nav-item active">📊 Dashboard</a>
+                <a href="my-quizzes.html" class="nav-item">📝 My Quizy Bundles</a>
+                <a href="create.html" class="nav-item">📤 Upload Material</a>
+                <a href="#" class="nav-item" id="nav-analytics">📈 Analytics</a>
+                <a href="#" class="nav-item" id="nav-achievements">🏆 Achievements</a>
+                <a href="my-quizzes.html" class="nav-item">📚 Library</a>
+            </nav>
+
+            <nav class="nav-section sidebar-bottom">
+                <p class="nav-label">Account</p>
+                <a href="#" class="nav-item" id="nav-settings">⚙️ Settings</a>
+                <a href="#" class="nav-item" id="nav-profile">👤 Profile</a>
+                <a href="#" class="nav-item" id="btn-logout">🚪 Sign Out</a>
+            </nav>
+        </aside>
+
+        <!-- MAIN LAYOUT -->
+        <div style="flex: 1; display: flex; flex-direction: column;">
+            <header class="top-bar">
+                <div style="flex: 1;"></div> <!-- Spacer to push icons right -->
+                <div style="display: flex; gap: 24px; align-items: center;">
+                    <span style="font-size: 18px; cursor: pointer;" id="btn-notifications">🔔</span>
+                    <span style="font-size: 18px; cursor: pointer;" id="btn-help">❓</span>
+                    <div style="width: 32px; height: 32px; background: var(--blue-royal); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 12px;"
+                        id="avatar-initials">G</div>
+                </div>
+            </header>
+
+            <main class="main-content">
+                <header style="margin-bottom: 40px;">
+                    <h1 class="serif" id="greeting" style="font-size: 32px;">Welcome back</h1>
+                    <p class="text-muted" id="current-date">Fetching date...</p>
+                    <div style="display: flex; gap: 24px; margin-top: 16px;">
+                        <span style="font-size: 13px; font-weight: 700;">🔥 <span id="stat-streak">0</span>-day
+                            streak</span>
+                        <span style="font-size: 13px; font-weight: 700;">⏱️ <span id="stat-time">0.0</span>h
+                            today</span>
+                        <span style="font-size: 13px; font-weight: 700;">🎯 <span id="stat-accuracy">0</span>%
+                            Quizy Accuracy</span>
+                    </div>
+                </header>
+
+                <!-- METRICS GRID -->
+                <section class="metrics-grid">
+                    <div class="metric-card">
+                        <p class="label">Quizzes Taken</p>
+                        <p class="value" id="count-quizzes">0</p>
+                        <p class="trend up">↗ +0 this week</p>
+                        <div class="sparkline-container"></div>
+                    </div>
+                    <div class="metric-card">
+                        <p class="label">Aggregate Accuracy</p>
+                        <p class="value" id="count-accuracy">0%</p>
+                        <p class="trend up">↗ +0%</p>
+                        <div class="sparkline-container"></div>
+                    </div>
+                    <div class="metric-card">
+                        <p class="label">Study Time</p>
+                        <p class="value" id="count-time">0h</p>
+                        <p class="trend up">↗ +0h</p>
+                        <div class="sparkline-container"></div>
+                    </div>
+                    <div class="metric-card">
+                        <p class="label">Last Quiz</p>
+                        <p class="value" id="last-quiz-score">-</p>
+                        <p class="text-muted" style="font-size: 12px;" id="last-quiz-topic">No quizzes taken yet</p>
+                    </div>
+                </section>
+
+                <!-- PERFORMANCE CHART -->
+                <section class="performance-section">
+                    <div class="section-header-row">
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <h3 class="serif">Performance Analytics</h3>
+                            <span class="badge">Live</span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-outline" style="padding: 4px 12px; font-size: 12px;">7D</button>
+                            <button class="btn btn-outline"
+                                style="padding: 4px 12px; font-size: 12px; background: var(--blue-soft); color: var(--blue-royal);">30D</button>
+                            <button class="btn btn-outline" style="padding: 4px 12px; font-size: 12px;">90D</button>
+                            <button class="btn btn-primary" id="btn-export-data"
+                                style="padding: 4px 12px; font-size: 12px; margin-left: 12px;">Export Data</button>
+                        </div>
+                    </div>
+                    <div style="height: 350px;">
+                        <canvas id="performance-chart"></canvas>
+                    </div>
+                </section>
+
+                <!-- DATA BREAKDOWN -->
+                <section class="topics-grid">
+                    <div class="topic-list">
+                        <h3 class="serif" style="margin-bottom: 24px;">Topic Mastery</h3>
+                        <div id="topic-container">
+                            <!-- Topic items will be injected here -->
+                        </div>
+                        <a href="my-quizzes.html" class="form-link"
+                            style="display: block; text-align: center; margin-top: 24px;">View Full Curriculum →</a>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <!-- QUOTE CARD -->
+                        <div id="motivation-panel"
+                            style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border-radius: 8px; padding: 24px; border-top: 4px solid var(--gold-accent);">
+                            <h3 class="serif" style="margin-bottom: 12px; font-size: 16px;">💡 Daily Inspiration</h3>
+                            <div id="quote-container">
+                                <!-- Quotes injected here -->
+                            </div>
+                        </div>
+
+                        <!-- STUDY TIP CARD -->
+                        <div
+                            style="background: white; border: 1px solid var(--slate-border); border-radius: 8px; padding: 24px; flex: 1;">
+                            <h3 class="serif" style="margin-bottom: 12px; font-size: 16px;">🧠 Cognitive Hack</h3>
+                            <p
+                                style="font-size: 13px; color: var(--slate-text); line-height: 1.5; margin-bottom: 16px;">
+                                <strong>Active Recall:</strong> Don't just re-read. Test yourself immediately after
+                                studying to strengthen neural pathways.
+                            </p>
+                            <div
+                                style="padding: 12px; background: #F8FAFC; border-radius: 6px; border: 1px dashed var(--slate-border);">
+                                <p
+                                    style="font-size: 11px; font-weight: 700; color: #64748B; margin-bottom: 4px; text-transform: uppercase;">
+                                    Next Milestone</p>
+                                <p style="font-size: 13px; font-weight: 600; color: var(--navy-deep);">Master "System
+                                    Architecture"</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- QUICK ACTIONS -->
+                <section class="quick-actions">
+                    <div class="action-card">
+                        <div class="action-icon" style="background: var(--blue-soft); color: var(--blue-royal);">📤
+                        </div>
+                        <h4 style="margin-bottom: 8px;">Upload Material</h4>
+                        <p class="text-muted" style="font-size: 13px; margin-bottom: 24px;">Analyze new research papers
+                            or PDFs</p>
+                        <a href="create.html" class="btn btn-primary"
+                            style="width: 100%; justify-content: center;">Upload to Quizy</a>
+                    </div>
+                    <div class="action-card">
+                        <div class="action-icon" style="background: var(--green-success); color: white;">🎲</div>
+                        <h4 style="margin-bottom: 8px;">Random Challenge</h4>
+                        <p class="text-muted" style="font-size: 13px; margin-bottom: 24px;">Test retention from mixed
+                            topics</p>
+                        <button class="btn btn-outline" id="btn-random-challenge"
+                            style="width: 100%; justify-content: center;">Start
+                            Challenge</button>
+                    </div>
+                    <div class="action-card">
+                        <div class="action-icon" style="background: var(--gold-accent); color: white;">🔄</div>
+                        <h4 style="margin-bottom: 8px;">Review Mistakes</h4>
+                        <p class="text-muted" style="font-size: 13px; margin-bottom: 24px;">Active recall for failed
+                            questions</p>
+                        <button class="btn btn-outline" id="btn-review-mistakes"
+                            style="width: 100%; justify-content: center; border-color: var(--gold-accent); color: var(--gold-accent);">Start
+                            Review</button>
+            </main>
+        </div>
+
+        <!-- SETTINGS MODAL -->
+        <div id="settings-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Account Settings</h3>
+                    <button class="close-modal" id="close-settings">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-group">
+                        <label>Display Name</label>
+                        <input type="text" id="setting-name" disabled class="form-input">
+                    </div>
+                    <div class="setting-group">
+                        <label>Email ID</label>
+                        <input type="text" id="setting-email" disabled class="form-input">
+                    </div>
+                    <div class="setting-group">
+                        <label>Data Management</label>
+                        <p class="text-muted" style="font-size: 13px; margin-bottom: 8px;">Clear local quiz history and
+                            reset progress.</p>
+                        <a href="clear-data.html" class="btn btn-outline"
+                            style="border-color: var(--red-error); color: var(--red-error);">Reset Application Data</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCRIPTS -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script type="module" src="/src/dashboard.ts"></script>
+</body>
+
+</html>

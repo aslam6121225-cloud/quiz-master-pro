@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Old Quizzes - Quizy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        h1 {
+            color: #1e40af;
+            margin-bottom: 16px;
+            font-size: 28px;
+        }
+
+        p {
+            color: #64748b;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .warning {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .warning h3 {
+            color: #92400e;
+            margin-bottom: 8px;
+        }
+
+        .warning p {
+            color: #78350f;
+            font-size: 14px;
+        }
+
+        button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 8px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        button.secondary {
+            background: #64748b;
+        }
+
+        button.secondary:hover {
+            background: #475569;
+        }
+
+        #status {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🗑️ Clear Old Quiz Data</h1>
+        <p>The quiz format has been updated! To see the new UPSC/SSC style questions, you need to delete old quiz
+            bundles and generate new ones.</p>
+
+        <div class="warning">
+            <h3>⚠️ Important</h3>
+            <p>This will delete ALL your quiz bundles and results. Your PDFs will be preserved. You'll need to
+                regenerate quizzes after clearing.</p>
+        </div>
+
+        <div>
+            <button onclick="clearQuizzes()">Delete Old Quizzes Only</button>
+            <button onclick="clearAll()">Delete Everything (Fresh Start)</button>
+            <button class="secondary" onclick="window.location.href='dashboard.html'">Cancel</button>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script type="module">
+        import { storage } from './src/services/storageService';
+
+        window.clearQuizzes = async function () {
+            if (!confirm('Delete all quiz bundles and results? Your PDFs will be kept.')) return;
+
+            const status = document.getElementById('status');
+            status.className = 'info';
+            status.textContent = 'Deleting old quizzes...';
+
+            try {
+                // Get all quizzes and results
+                const quizzes = await storage.getAll('quizzes');
+                const results = await storage.getAll('results');
+
+                // Delete them
+                for (const quiz of quizzes) {
+                    await storage.delete('quizzes', quiz.id);
+                }
+                for (const result of results) {
+                    await storage.delete('results', result.id);
+                }
+
+                status.className = 'success';
+                status.textContent = `✅ Deleted ${quizzes.length} quiz bundles and ${results.length} results. Now go to Upload Material to generate new quizzes!`;
+
+                setTimeout(() => {
+                    window.location.href = 'create.html';
+                }, 2000);
+            } catch (err) {
+                status.className = 'error';
+                status.textContent = '❌ Error: ' + err.message;
+            }
+        };
+
+        window.clearAll = async function () {
+            if (!confirm('Delete EVERYTHING including PDFs? This cannot be undone!')) return;
+
+            const status = document.getElementById('status');
+            status.className = 'info';
+            status.textContent = 'Clearing all data...';
+
+            try {
+                // Clear entire database
+                const stores = ['pdfs', 'quizzes', 'results', 'faceData'];
+                let totalDeleted = 0;
+
+                for (const store of stores) {
+                    const items = await storage.getAll(store);
+                    for (const item of items) {
+                        await storage.delete(store, item.id);
+                    }
+                    totalDeleted += items.length;
+                }
+
+                status.className = 'success';
+                status.textContent = `✅ Deleted ${totalDeleted} items. Fresh start! Redirecting to upload...`;
+
+                setTimeout(() => {
+                    window.location.href = 'create.html';
+                }, 2000);
+            } catch (err) {
+                status.className = 'error';
+                status.textContent = '❌ Error: ' + err.message;
+            }
+        };
+
+        // Show current data count
+        (async function () {
+            const quizzes = await storage.getAll('quizzes');
+            const results = await storage.getAll('results');
+            const pdfs = await storage.getAll('pdfs');
+
+            const status = document.getElementById('status');
+            status.className = 'info';
+            status.textContent = `Current data: ${quizzes.length} quiz bundles, ${results.length} results, ${pdfs.length} PDFs`;
+        })();
+    </script>
+</body>
+
+</html>

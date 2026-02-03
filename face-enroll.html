@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identity Enrollment | QUIZZES.PROTOCOL</title>
+    <link rel="stylesheet" href="/src/styles/main.css">
+    <link rel="stylesheet" href="/src/styles/face-enroll.css">
+</head>
+
+<body class="enroll-body">
+    <div class="enroll-container">
+        <main class="mirror-vault">
+            <header class="mirror-header">
+                <nav class="protocol-breadcrumb">INSTITUTION / SECURITY / ENROLLMENT</nav>
+                <h1 class="serif-text">IDENTITY_ENROLLMENT_PROTOCOL</h1>
+                <p class="mono-status" style="color: var(--ink-muted);">Establishing biometric sovereign vectors</p>
+            </header>
+
+            <!-- System Advisory (Hidden by default) -->
+            <div id="permission-advisory" class="system-advisory hidden">
+                <div class="advisory-title">[SYSTEM_ADVISORY: SENSOR_ACCESS_REQUIRED]</div>
+                <p class="advisory-text">Biometric security is an optional but highly recommended layer for local
+                    identity sovereignty. Please enable camera access to proceed with vector enrollment.</p>
+            </div>
+
+            <!-- The Mirror Viewport -->
+            <div class="viewport-container" id="mirror-viewport">
+                <div class="sensor-mirror" id="face-frame">
+                    <video id="video-stream" autoplay playsinline muted></video>
+                </div>
+            </div>
+
+            <!-- Technical Status Matrix -->
+            <div class="status-matrix">
+                <div class="status-row">[LOAD_MODELS: <span id="status-models" class="status-value">PENDING</span>]
+                </div>
+                <div class="status-row">[FACE_DETECTION: <span id="status-detection"
+                        class="status-value">NO_TARGET</span>]</div>
+                <div class="status-row">[DATA_FIDELITY: <span id="status-fidelity" class="status-value">0%</span>]</div>
+            </div>
+
+            <div class="enroll-actions">
+                <button id="btn-capture-identity" class="btn-capture" disabled>CAPTURE_IDENTITY_VECTORS</button>
+                <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center;">
+                    <a href="dashboard.html" class="btn-secondary">RETURN_TO_DASHBOARD</a>
+                    <button id="btn-retry-sensor" class="btn-secondary hidden">RETRY_SENSOR_INIT</button>
+                </div>
+            </div>
+
+            <!-- Success Overlay (Hidden) -->
+            <div id="enroll-success" class="hidden"
+                style="position: absolute; inset: 0; background: var(--bg-vault); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px;">
+                <h2 class="serif-text" style="font-size: 32px; margin-bottom: 24px;">Enrollment Finalized</h2>
+                <p class="mono-status" style="color: var(--ink-muted); margin-bottom: 48px;">IDENTITY_VECTORS_STORED.
+                    SECURITY_LEVEL_ELEVATED.</p>
+                <a href="dashboard.html" class="btn-capture"
+                    style="max-width: 300px; text-decoration: none; text-align: center;">RESUME_DASHBOARD</a>
+            </div>
+        </main>
+    </div>
+
+    <!-- Core Services & Script -->
+    <script type="module" src="/src/auth/face-enroll.ts"></script>
+</body>
+
+</html>

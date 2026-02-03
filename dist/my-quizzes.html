@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Quizy Bundles | Quizy Pro</title>
+    <style>
+        .quiz-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .quiz-item-card {
+            background: white;
+            border: 1px solid var(--slate-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            transition: var(--transition-premium);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .quiz-item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-3);
+            border-color: var(--blue-royal);
+        }
+
+        .quiz-badge {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--blue-royal);
+            background: var(--blue-soft);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+    </style>
+  <script type="module" crossorigin src="/assets/myQuizzes-fKXKJdVI.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/storageService-BhlXHyt_.js">
+  <link rel="stylesheet" crossorigin href="/assets/main-CJ0bpuVV.css">
+  <link rel="stylesheet" crossorigin href="/assets/dashboard-R_PG2Q05.css">
+</head>
+
+<body class="dashboard">
+    <div class="dashboard-wrapper">
+        <aside class="sidebar">
+            <div class="workspace-selector">
+                <div class="workspace-info">
+                    <h4>Quizy Library</h4>
+                    <p>Professional Workspace</p>
+                </div>
+            </div>
+            <nav class="nav-section">
+                <p class="nav-label">Overview</p>
+                <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+                <a href="my-quizzes.html" class="nav-item active">📝 My Quizzes</a>
+                <a href="create.html" class="nav-item">📤 Upload Material</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header style="margin-bottom: 48px; border-bottom: 1px solid var(--slate-border); padding-bottom: 24px;">
+                <h1 class="serif" style="font-size: 32px;">My Quizy Bundles</h1>
+                <p class="text-muted">Access your generated scenario series and study archive.</p>
+            </header>
+
+            <div id="quiz-library" class="quiz-grid">
+                <!-- Quizzes injected here -->
+                <div style="grid-column: span 3; text-align: center; padding: 100px 0;" id="empty-state" class="hidden">
+                    <p class="text-muted">No Quizy material found. <a href="create.html" class="form-link">Upload your
+                            first PDF</a> to generate assessments.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>

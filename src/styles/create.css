@@ -1,0 +1,202 @@
+/* 
+  QuizMaster Pro | PDF Generation & Upload Styles
+  Aesthetic: Clean Workspace, Linear Slider, Drag-Drop Utility
+*/
+
+.upload-zone {
+    width: 100%;
+    height: 300px;
+    border: 2px dashed #CBD5E1;
+    border-radius: var(--radius-md);
+    background-color: var(--paper);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-premium);
+    margin-bottom: 32px;
+}
+
+.upload-zone:hover,
+.upload-zone.drag-over {
+    border-color: var(--blue-royal);
+    background-color: var(--blue-soft);
+}
+
+.upload-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.upload-zone h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.upload-zone p {
+    color: var(--slate-text);
+    font-size: 14px;
+}
+
+/* Preview Card */
+.preview-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 24px;
+    background: white;
+    border: 1px solid var(--slate-border);
+    border-radius: var(--radius-md);
+    margin-bottom: 32px;
+}
+
+.pdf-thumb {
+    width: 80px;
+    height: 110px;
+    background: var(--slate-border);
+    border: 1px solid var(--slate-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--slate-text);
+}
+
+.file-info h4 {
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.file-info p {
+    font-size: 13px;
+    color: var(--slate-text);
+}
+
+/* Settings Card */
+.settings-card {
+    background: white;
+    padding: 32px;
+    border: 1px solid var(--slate-border);
+    border-radius: var(--radius-md);
+    margin-bottom: 32px;
+}
+
+.setting-row {
+    margin-bottom: 32px;
+}
+
+.setting-row:last-child {
+    margin-bottom: 0;
+}
+
+.setting-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.setting-label span:last-child {
+    color: var(--blue-royal);
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: var(--blue-royal);
+}
+
+select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--slate-border);
+    border-radius: var(--radius-sm);
+    background: var(--paper);
+    font-family: inherit;
+}
+
+/* Progression Radios */
+.progression-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.progression-option {
+    padding: 16px;
+    border: 1px solid var(--slate-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.progression-option.active {
+    border-color: var(--blue-royal);
+    background: var(--blue-soft);
+    color: var(--blue-royal);
+}
+
+/* Generation Progress overlay */
+.processing-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.processing-card {
+    width: 100%;
+    max-width: 500px;
+    background: white;
+    padding: 48px;
+    border: 1px solid var(--slate-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-4);
+}
+
+.progress-header {
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.progress-list {
+    margin-top: 32px;
+}
+
+.progress-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: var(--slate-text);
+    margin-bottom: 12px;
+}
+
+.progress-item.active {
+    color: var(--navy-deep);
+    font-weight: 600;
+}
+
+.progress-item.complete {
+    color: var(--green-success);
+}
+
+.bar-container {
+    height: 8px;
+    background: var(--slate-border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: var(--blue-royal);
+    transition: width 0.3s ease;
+}

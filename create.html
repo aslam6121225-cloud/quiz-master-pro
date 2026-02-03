@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Material | Quizy</title>
+    <link rel="stylesheet" href="src/styles/main.css">
+    <link rel="stylesheet" href="src/styles/dashboard.css">
+    <link rel="stylesheet" href="src/styles/create.css">
+</head>
+
+<body class="dashboard">
+    <div class="dashboard-wrapper">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="workspace-selector">
+                <div class="workspace-info">
+                    <h4 id="user-display-name">Quizy Pro Access</h4>
+                    <p>Conceptual Workspace</p>
+                </div>
+            </div>
+
+            <nav class="nav-section">
+                <p class="nav-label">Overview</p>
+                <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+                <a href="my-quizzes.html" class="nav-item">📝 My Quizzes</a>
+                <a href="create.html" class="nav-item active">📤 Upload Material</a>
+                <a href="#" class="nav-item">📈 Analytics</a>
+                <a href="#" class="nav-item">🏆 Achievements</a>
+                <a href="#" class="nav-item">📚 Library</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header style="margin-bottom: 40px;">
+                <h1 class="serif" style="font-size: 32px;">Upload Study Material</h1>
+                <p class="text-muted">Transform research papers and journals into adaptive assessments.</p>
+            </header>
+
+            <!-- UPLOAD ZONE -->
+            <div id="drop-zone" class="upload-zone">
+                <div class="upload-icon">📄</div>
+                <h3>Drag PDF or Document here</h3>
+                <p>Strictly: PDF / Educational Documents (Max 10MB)</p>
+                <input type="file" id="file-input" class="hidden" accept=".pdf,.txt">
+            </div>
+
+            <!-- PREVIEW (Hidden by default) -->
+            <div id="file-preview" class="preview-card hidden">
+                <div class="pdf-thumb">PDF</div>
+                <div class="file-info" style="flex: 1;">
+                    <h4 id="prev-name">assessment_material.pdf</h4>
+                    <p id="prev-meta">1.2 MB • 24 Pages</p>
+                </div>
+                <button class="btn btn-outline" id="btn-remove-file">Remove</button>
+            </div>
+
+            <!-- SETTINGS -->
+            <section class="settings-card" id="generation-settings">
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <span>Number of questions</span>
+                        <span id="label-num">20</span>
+                    </div>
+                    <input type="range" id="input-num" min="15" max="30" value="20">
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <span>Time limit per quiz</span>
+                    </div>
+                    <select id="input-time">
+                        <option value="600">10 Minutes</option>
+                        <option value="900" selected>15 Minutes</option>
+                        <option value="1200">20 Minutes</option>
+                        <option value="1500">25 Minutes</option>
+                        <option value="1800">30 Minutes</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <span>Difficulty Progression</span>
+                    </div>
+                    <div class="progression-options">
+                        <div class="progression-option active" data-mode="progression">Easy to Hard</div>
+                        <div class="progression-option" data-mode="mixed">Mixed</div>
+                        <div class="progression-option" data-mode="advanced">Advanced Only</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 48px;">
+                    <button class="btn btn-primary" id="btn-generate"
+                        style="width: 100%; justify-content: center; height: 56px; font-size: 16px;" disabled>
+                        Generate 15 Unique Quizzes
+                    </button>
+                </div>
+            </section>
+
+            <!-- PROCESSING OVERLAY (Hidden) -->
+            <div id="processing-overlay" class="processing-overlay hidden">
+                <div class="processing-card">
+                    <div class="progress-header">
+                        <h2 class="serif">Crafting Your Quizy</h2>
+                        <p class="text-muted" id="status-main">Extracting conceptual vectors...</p>
+                    </div>
+
+                    <div class="bar-container">
+                        <div class="bar-fill" id="progress-bar" style="width: 10%;"></div>
+                    </div>
+
+                    <div class="progress-list">
+                        <div class="progress-item" id="step-extract">Extracting document text...</div>
+                        <div class="progress-item" id="step-keywords">Analyzing scientific keywords...</div>
+                        <div class="progress-item" id="step-questions">Generating unique Quizy sets...</div>
+                        <div class="progress-item" id="step-finalize">Finalizing Quizy archive...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUCCESS VIEW (Hidden) -->
+            <div id="success-view" class="hidden" style="text-align: center; padding: 64px 0;">
+                <div style="font-size: 64px; margin-bottom: 24px;">✅</div>
+                <h2 class="serif" style="font-size: 32px; margin-bottom: 16px;">15 Quizy Sessions Generated!</h2>
+                <p class="text-muted" style="margin-bottom: 40px;">Your document has been analyzed. 342 unique scenarios
+                    are ready for conceptual assessment.</p>
+                <a href="dashboard.html" class="btn btn-primary" style="padding: 16px 48px;">Start Quizy
+                    Session</a>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script type="module" src="/src/create.ts"></script>
+</body>
+
+</html>

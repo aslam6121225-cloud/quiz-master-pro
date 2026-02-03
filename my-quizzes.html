@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Quizy Bundles | Quizy Pro</title>
+    <link rel="stylesheet" href="src/styles/main.css">
+    <link rel="stylesheet" href="src/styles/dashboard.css">
+    <style>
+        .quiz-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .quiz-item-card {
+            background: white;
+            border: 1px solid var(--slate-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            transition: var(--transition-premium);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .quiz-item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-3);
+            border-color: var(--blue-royal);
+        }
+
+        .quiz-badge {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--blue-royal);
+            background: var(--blue-soft);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body class="dashboard">
+    <div class="dashboard-wrapper">
+        <aside class="sidebar">
+            <div class="workspace-selector">
+                <div class="workspace-info">
+                    <h4>Quizy Library</h4>
+                    <p>Professional Workspace</p>
+                </div>
+            </div>
+            <nav class="nav-section">
+                <p class="nav-label">Overview</p>
+                <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+                <a href="my-quizzes.html" class="nav-item active">📝 My Quizzes</a>
+                <a href="create.html" class="nav-item">📤 Upload Material</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header style="margin-bottom: 48px; border-bottom: 1px solid var(--slate-border); padding-bottom: 24px;">
+                <h1 class="serif" style="font-size: 32px;">My Quizy Bundles</h1>
+                <p class="text-muted">Access your generated scenario series and study archive.</p>
+            </header>
+
+            <div id="quiz-library" class="quiz-grid">
+                <!-- Quizzes injected here -->
+                <div style="grid-column: span 3; text-align: center; padding: 100px 0;" id="empty-state" class="hidden">
+                    <p class="text-muted">No Quizy material found. <a href="create.html" class="form-link">Upload your
+                            first PDF</a> to generate assessments.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth } from './src/firebase';
+        import { onAuthStateChanged } from 'firebase/auth';
+        import { storage } from './src/services/storageService';
+
+        const container = document.getElementById('quiz-library');
+        const empty = document.getElementById('empty-state');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const quizzes = await storage.getAll('quizzes');
+                const userBundles = quizzes.filter(q => q.owner === user.email);
+
+                if (userBundles.length === 0) {
+                    empty.classList.remove('hidden');
+                } else {
+                    container.innerHTML = userBundles.map(q => `
+                        <div class="quiz-item-card" id="card-${q.id}">
+                            <span class="quiz-badge">QUIZY_BUNDLE</span>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <h3 class="serif" style="font-size: 18px; margin-bottom: 12px; max-width: 80%;">${q.title}</h3>
+                                <button class="btn-delete" onclick="deleteBundle('${q.id}')" style="background: none; border: none; cursor: pointer; font-size: 14px; color: var(--red-error);">🗑️</button>
+                            </div>
+                            <p class="text-muted" style="font-size: 13px; margin-bottom: 24px; flex: 1;">Contains 15 unique sequences. Adaptive scenario-based questions enabled.</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 11px; font-weight: 700; color: var(--slate-text);">ARCHIVED: ${new Date(q.timestamp).toLocaleDateString()}</span>
+                                <a href="quiz.html?id=${q.id}" class="btn btn-primary" style="padding: 10px 20px; font-size: 13px;">Start Quizy Session</a>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        window.deleteBundle = async (id) => {
+            if (confirm("Permanently archive this Quizy bundle? This cannot be undone.")) {
+                await storage.delete('quizzes', id);
+                document.getElementById(`card-${id}`)?.remove();
+                if (container.children.length === 1 && container.lastElementChild.id === 'empty-state') {
+                    empty.classList.remove('hidden');
+                }
+            }
+        };
+    </script>
+</body>
+
+</html>

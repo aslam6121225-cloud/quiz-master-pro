@@ -1,0 +1,172 @@
+/* 
+  QuizMaster Pro | Institutional Quiz Interface
+  Aesthetic: Calm, Rigorous, Focused
+*/
+
+.quiz-wrapper {
+    background: var(--paper);
+    min-height: 100vh;
+    padding: 40px 0;
+}
+
+.quiz-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.quiz-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding: 0 24px;
+}
+
+.quiz-card {
+    background: white;
+    padding: 48px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--slate-border);
+    box-shadow: var(--shadow-3);
+    position: relative;
+}
+
+.question-meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--slate-text);
+    margin-bottom: 24px;
+    display: block;
+}
+
+.question-text {
+    font-family: var(--font-serif);
+    font-size: 24px;
+    line-height: 1.4;
+    color: var(--navy-deep);
+    margin-bottom: 40px;
+}
+
+.options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.option-btn {
+    padding: 20px 24px;
+    background: var(--paper);
+    border: 1px solid var(--slate-border);
+    border-radius: var(--radius-sm);
+    text-align: left;
+    font-size: 15px;
+    font-weight: 500;
+    transition: var(--transition-premium);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.option-btn:hover:not(:disabled) {
+    border-color: var(--blue-royal);
+    background: var(--blue-soft);
+}
+
+.option-btn.selected {
+    border-color: var(--blue-royal);
+    background: var(--blue-soft);
+    color: var(--blue-royal);
+}
+
+.option-btn.correct {
+    border-color: var(--green-success);
+    background: #ECFDF5;
+    color: var(--green-success);
+}
+
+.option-btn.wrong {
+    border-color: var(--red-error);
+    background: #FEF2F2;
+    color: var(--red-error);
+}
+
+/* Explanation Panel */
+.explanation-panel {
+    margin-top: 32px;
+    padding: 32px;
+    background: var(--paper);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--blue-royal);
+    animation: fade-up 0.5s var(--lux-ease);
+}
+
+.resource-links {
+    display: flex;
+    gap: 24px;
+    margin-top: 20px;
+}
+
+.resource-link {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--blue-royal);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Timer & Progress */
+.quiz-timer {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.progress-track {
+    height: 4px;
+    background: var(--slate-border);
+    margin-top: 24px;
+}
+
+.progress-indicator {
+    height: 100%;
+    background: var(--blue-royal);
+    transition: width 0.3s ease;
+}
+
+/* Result Screen */
+.result-header {
+    text-align: center;
+    padding: 60px 0;
+}
+
+.score-circle {
+    width: 200px;
+    height: 200px;
+    border: 8px solid var(--blue-soft);
+    border-radius: 50%;
+    margin: 0 auto 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.score-value {
+    font-size: 56px;
+    font-weight: 700;
+    color: var(--navy-deep);
+}
+
+@keyframes fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
