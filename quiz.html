@@ -24,14 +24,29 @@
             </div>
 
             <!-- QUESTIONS -->
-            <main id="quiz-main" style="margin-top: 40px;">
-                <div class="quiz-card" id="question-card">
-                    <span class="question-meta">QUESTION <span id="q-current">1</span> OF <span
-                            id="q-total">20</span></span>
-                    <h2 class="question-text" id="q-text">Loading institutional material...</h2>
+            <main id="quiz-main" style="margin-top: 20px;">
+                <div class="quiz-card" id="question-card"
+                    style="max-width: 800px; margin: 0 auto; padding: 0; overflow: hidden;">
 
-                    <div class="options-grid" id="options-container">
-                        <!-- Options injected here -->
+                    <!-- CONCEPT VISUAL (Premium Feature) -->
+                    <div id="concept-visual" class="concept-visual"
+                        style="height: 240px; background: #e2e8f0; display: none; align-items: center; justify-content: center; overflow: hidden;">
+                        <img id="concept-img" src="" alt="Concept Visualization"
+                            style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+
+                    <div style="padding: 32px 40px;">
+                        <!-- Question Pill -->
+                        <span class="question-pill">QUESTION <span id="q-current">1</span></span>
+
+                        <h2 class="question-text" id="q-text"
+                            style="font-size: 20px; line-height: 1.5; margin-top: 16px; margin-bottom: 32px; color: var(--navy-deep);">
+                            Loading institutional material...</h2>
+
+                        <div class="options-grid" id="options-container"
+                            style="display: flex; flex-direction: column; gap: 16px;">
+                            <!-- Options injected here -->
+                        </div>
                     </div>
 
 

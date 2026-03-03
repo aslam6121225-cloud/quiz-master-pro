@@ -92,10 +92,24 @@ function renderQuestion() {
     const prefixes = ["Analysis: ", "Objective: ", "Inquiry: ", "Conceptual Node: "];
     textEl.textContent = prefixes[currentQIdx % 4] + q.question;
 
+    // Concept Visual Injection (Premium Feature)
+    const visualContainer = document.getElementById('concept-visual');
+    const visualImg = document.getElementById('concept-img') as HTMLImageElement;
+
+    if (visualContainer && visualImg) {
+        // Use a consistent definition image based on the question topic/index
+        // Using picsum with a seed based on the question length ensures consistent images per question
+        const seed = q.question.length + currentQIdx;
+        visualImg.src = `https://picsum.photos/seed/${seed}/800/240?grayscale&blur=1`;
+        visualContainer.style.display = 'flex';
+    }
+
     q.options.forEach((opt: string) => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
-        btn.textContent = opt;
+        // Add text span to keep structure clean with the new ::before pseudo-element
+        btn.innerHTML = `<span style="flex: 1;">${opt}</span>`;
+
         btn.onclick = () => {
             // Remove previous selection
             document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));

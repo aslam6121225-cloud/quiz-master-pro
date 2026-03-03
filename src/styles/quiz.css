@@ -31,64 +31,116 @@
     position: relative;
 }
 
-.question-meta {
-    font-family: var(--font-mono);
+/* Question Pill */
+.question-pill {
+    display: inline-block;
+    background: #E0E7FF;
+    color: #4338CA;
+    padding: 6px 16px;
+    border-radius: 999px;
     font-size: 11px;
+    font-weight: 800;
     letter-spacing: 0.1em;
-    color: var(--slate-text);
+    text-transform: uppercase;
     margin-bottom: 24px;
-    display: block;
 }
 
 .question-text {
-    font-family: var(--font-serif);
-    font-size: 24px;
-    line-height: 1.4;
-    color: var(--navy-deep);
-    margin-bottom: 40px;
+    font-family: 'Inter', sans-serif;
+    /* Explicitly use Inter or system sans */
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.5;
+    color: #1E293B;
+    margin-bottom: 32px;
 }
 
+/* Premium Option Cards */
 .options-grid {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .option-btn {
+    position: relative;
     padding: 20px 24px;
-    background: var(--paper);
-    border: 1px solid var(--slate-border);
-    border-radius: var(--radius-sm);
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
     text-align: left;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 500;
-    transition: var(--transition-premium);
+    color: #334155;
+    transition: all 0.2s ease;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    min-height: 72px;
+    white-space: normal;
+    line-height: 1.5;
+}
+
+/* Custom Radio Circle */
+.option-btn::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border: 2px solid #CBD5E1;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
 }
 
 .option-btn:hover:not(:disabled) {
-    border-color: var(--blue-royal);
-    background: var(--blue-soft);
+    border-color: #3B82F6;
+    background: #F8FAFC;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .option-btn.selected {
-    border-color: var(--blue-royal);
-    background: var(--blue-soft);
-    color: var(--blue-royal);
+    border-color: #3B82F6;
+    background: #EFF6FF;
+    /* Pale Blue */
+    color: #1E40AF;
+    font-weight: 600;
 }
 
+.option-btn.selected::before {
+    border-color: #3B82F6;
+    background: #3B82F6;
+    box-shadow: inset 0 0 0 4px #EFF6FF;
+    /* Inner dot trick */
+}
+
+/* Correct/Wrong States (Post Answer) */
 .option-btn.correct {
-    border-color: var(--green-success);
+    border-color: #10B981;
     background: #ECFDF5;
-    color: var(--green-success);
+    color: #065F46;
+}
+
+.option-btn.correct::before {
+    border-color: #10B981;
+    background: #10B981;
+    box-shadow: inset 0 0 0 4px #ECFDF5;
 }
 
 .option-btn.wrong {
-    border-color: var(--red-error);
+    border-color: #EF4444;
     background: #FEF2F2;
-    color: var(--red-error);
+    color: #991B1B;
+}
+
+.option-btn.wrong::before {
+    border-color: #EF4444;
+    background: #EF4444;
+    box-shadow: inset 0 0 0 4px #FEF2F2;
 }
 
 /* Explanation Panel */
