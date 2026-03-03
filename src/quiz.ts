@@ -61,11 +61,6 @@ async function initQuiz() {
     // Set Time Limit from settings
     timeRemaining = currentQuiz.settings?.timeLimit || 900;
 
-    currentQuiz.questions = currentQuiz.questions.map((q: any) => ({
-        ...q,
-        options: shuffle([...q.options])
-    }));
-
     renderQuestion();
     startTimer();
 }
@@ -88,27 +83,25 @@ function renderQuestion() {
     if (totalEl) totalEl.textContent = currentQuiz.questions.length;
     if (progressEl) progressEl.style.width = `${((currentQIdx + 1) / currentQuiz.questions.length) * 100}%`;
 
-    // Anti-Cheating: Dynamic Prefixing
-    const prefixes = ["Analysis: ", "Objective: ", "Inquiry: ", "Conceptual Node: "];
-    textEl.textContent = prefixes[currentQIdx % 4] + q.question;
+    // Strict Rule: No Meta-talk. Start directly with the question.
+    textEl.textContent = q.text;
 
     // Concept Visual Injection (Premium Feature)
     const visualContainer = document.getElementById('concept-visual');
     const visualImg = document.getElementById('concept-img') as HTMLImageElement;
 
     if (visualContainer && visualImg) {
-        // Use a consistent definition image based on the question topic/index
-        // Using picsum with a seed based on the question length ensures consistent images per question
-        const seed = q.question.length + currentQIdx;
+        // Use a consistent definition image based on the question length
+        const seed = q.text.length + currentQIdx;
         visualImg.src = `https://picsum.photos/seed/${seed}/800/240?grayscale&blur=1`;
         visualContainer.style.display = 'flex';
     }
 
-    q.options.forEach((opt: string) => {
+    const labels = ["A", "B", "C", "D"];
+    q.options.forEach((opt: string, idx: number) => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
-        // Add text span to keep structure clean with the new ::before pseudo-element
-        btn.innerHTML = `<span style="flex: 1;">${opt}</span>`;
+        btn.innerHTML = `<span style="font-weight: 700; margin-right: 12px;">${labels[idx]})</span> <span style="flex: 1;">${opt}</span>`;
 
         btn.onclick = () => {
             // Remove previous selection
@@ -127,18 +120,18 @@ document.getElementById('btn-next')?.addEventListener('click', () => {
     const selectedBtn = document.querySelector('.option-btn.selected') as any;
     const choice = selectedBtn?._choice;
     const q = currentQuiz.questions[currentQIdx];
-
-    const isCorrect = choice === q.answer;
+    const correctOptionText = q.options[q.correctAnswer];
+    const isCorrect = choice === correctOptionText;
     if (isCorrect) userScore++;
 
     userAnswers.push({
-        question: q.question,
+        question: q.text,
         choice,
-        correctAnswer: q.answer,
+        correctAnswer: correctOptionText,
         isCorrect,
-        topic: q.topic,
-        explanation: q.explanation,
-        resources: q.resources
+        topic: currentQuiz.subject,
+        explanation: isCorrect ? q.reinforcement : q.explanation,
+        resources: currentQuiz.masteryPack
     });
 
     if (currentQIdx < currentQuiz.questions.length - 1) {
@@ -181,7 +174,7 @@ async function finalizeQuiz() {
         correctCount: userScore,
         totalCount: currentQuiz.questions.length,
         timeSpentSeconds: timeSpent,
-        topic: currentQuiz.questions[0].topic,
+        topic: currentQuiz.subject || 'General Domain',
         answers: userAnswers,
         timestamp: Date.now()
     });
@@ -204,7 +197,8 @@ function renderReviewList() {
     const list = document.getElementById('review-list');
     if (!list) return;
 
-    list.innerHTML = userAnswers.map((ans, idx) => `
+    // Render Individual Review Items
+    const reviewItems = userAnswers.map((ans, idx) => `
         <div class="review-item" style="padding: 24px; border-bottom: 1px solid var(--slate-border); border-left: 4px solid ${ans.isCorrect ? 'var(--green-success)' : 'var(--red-error)'}; margin-bottom: 24px;">
             <p style="font-weight: 700; font-size: 14px; margin-bottom: 12px; color: var(--slate-text);">SEQUENCE ${idx + 1} | TOPIC: ${ans.topic}</p>
             <p style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 20px;">${ans.question}</p>
@@ -221,26 +215,33 @@ function renderReviewList() {
             </div>
 
             <div style="background: var(--paper); padding: 20px; border-radius: 8px; margin-bottom: 24px; border: 1px solid var(--slate-border);">
-                <p style="font-size: 12px; font-weight: 800; margin-bottom: 8px; color: var(--blue-royal); letter-spacing: 0.5px;">DEEP CONCEPTUAL ANALYSIS</p>
+                <p style="font-size: 12px; font-weight: 800; margin-bottom: 8px; color: var(--blue-royal); letter-spacing: 0.5px;">${ans.isCorrect ? 'REINFORCEMENT LOGIC' : 'CORRECTIVE ANALYSIS'}</p>
                 <div style="font-size: 14px; color: var(--slate-text); line-height: 1.7; white-space: pre-line;">${ans.explanation}</div>
-            </div>
-
-            <div style="display: flex; gap: 20px; flex-wrap: wrap; padding-top: 12px; border-top: 1px dashed var(--slate-border);">
-                <a href="${ans.resources?.wikipedia || '#'}" target="_blank" style="font-size: 12px; font-weight: 700; color: var(--blue-royal);">📖 WIKIPEDIA REF</a>
-                <a href="${ans.resources?.youtube || '#'}" target="_blank" style="font-size: 12px; font-weight: 700; color: var(--blue-royal);">📺 VIDEO ANALYSIS</a>
-                <a href="${ans.resources?.google || '#'}" target="_blank" style="font-size: 12px; font-weight: 700; color: var(--blue-royal);">🔗 GOOGLE DEEP-DIVE</a>
             </div>
         </div>
     `).join('');
-}
 
-function shuffle(array: any[]) {
-    let m = array.length, t, i;
-    while (m) {
-        i = Math.floor(Math.random() * m--);
-        t = array[m];
-        array[m] = array[i];
-        array[i] = t;
-    }
-    return array;
+    // Mastery Pack Global Links
+    const pack = currentQuiz.masteryPack;
+    const masterySection = `
+        <div style="margin-top: 64px; padding: 40px; background: var(--navy-deep); border-radius: 12px; color: white; text-align: center;">
+            <h2 class="serif" style="margin-bottom: 16px;">Subject Mastery Pack</h2>
+            <p style="color: rgba(255,255,255,0.7); margin-bottom: 32px;">Deepen your understanding of ${currentQuiz.subject} with these curated external resources.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; text-align: left;">
+                <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px;">
+                    <h4 style="font-size: 13px; color: var(--blue-soft); margin-bottom: 12px;">📺 YOUTUBE TUTORIALS</h4>
+                    ${pack.youtubeLinks.map((link: string, i: number) => `<a href="${link}" target="_blank" style="display: block; color: white; margin-bottom: 8px; font-size: 13px;">• Tutorial Sequence ${i + 1}</a>`).join('')}
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px;">
+                    <h4 style="font-size: 13px; color: var(--blue-soft); margin-bottom: 12px;">📖 DEEP DIVE</h4>
+                    <a href="${pack.wikipediaLink}" target="_blank" style="display: block; color: white; margin-bottom: 12px; font-size: 13px;">• Wikipedia Article Link</a>
+                    <h4 style="font-size: 13px; color: var(--blue-soft); margin-bottom: 12px;">🔍 RESEARCH QUERY</h4>
+                    <a href="${pack.searchQuery}" target="_blank" style="display: block; color: white; font-size: 13px;">• Execute Global Search</a>
+                </div>
+            </div>
+        </div>
+    `;
+
+    list.innerHTML = reviewItems + masterySection;
 }
