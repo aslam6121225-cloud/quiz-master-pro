@@ -26,8 +26,7 @@ export default defineConfig({
                 dashboard: 'dashboard.html',
                 create: 'create.html',
                 myQuizzes: 'my-quizzes.html',
-                quiz: 'quiz.html',
-                test: 'test.html'
+                quiz: 'quiz.html'
             }
         }
     },
