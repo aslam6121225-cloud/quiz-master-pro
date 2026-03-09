@@ -41,9 +41,29 @@ export async function generateQuizFromText(text: string, title: string): Promise
     const sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [];
     const questions: Question[] = [];
 
-    // 3. Unique, Nuanced Generation (Anti-Plagiarism)
+    // Definition patterns to identify sentences that are likely definitions
+    const definitionPatterns = [
+        /is defined as/i,
+        /refers to/i,
+        /is known as/i,
+        /is a type of/i,
+        /means that/i,
+        /is the process of/i,
+        /represents the/i,
+        /is essentially/i,
+        /(?:\b\w+\b\s+){0,3}is a\b/i // e.g., "Photosynthesis is a..."
+    ];
+
+    // Filter for sentences that look like definitions
+    const definitionSentences = sentences.filter(sentence =>
+        definitionPatterns.some(pattern => pattern.test(sentence)) && sentence.length > 40
+    );
+
+    // If we don't have enough definition sentences, fallback to regular sentences
+    const poolOfSentences = definitionSentences.length >= 5 ? definitionSentences : sentences;
+
     // We shuffle sentences to ensure each generation uses different content parts
-    const shuffledSentences = [...sentences].sort(() => 0.5 - Math.random());
+    const shuffledSentences = [...poolOfSentences].sort(() => 0.5 - Math.random());
     const keywords = extractKeywords(cleanText);
 
     for (let i = 0; i < shuffledSentences.length && questions.length < 20; i++) {
@@ -53,11 +73,25 @@ export async function generateQuizFromText(text: string, title: string): Promise
         const concepts = identifyConcepts(sentence, keywords);
         if (concepts.length === 0) continue;
 
-        const target = concepts[Math.floor(Math.random() * concepts.length)];
+        // Try to find the concept that appears BEFORE the definition word to blank it out
+        // e.g. in "Photosynthesis is a process...", we want to blank out "Photosynthesis"
+        let target = concepts[Math.floor(Math.random() * concepts.length)];
+
+        for (const pattern of definitionPatterns) {
+            const match = sentence.match(pattern);
+            if (match && match.index !== undefined) {
+                const beforeDef = sentence.substring(0, match.index);
+                const conceptsBeforeDef = identifyConcepts(beforeDef, keywords);
+                if (conceptsBeforeDef.length > 0) {
+                    target = conceptsBeforeDef[0];
+                    break;
+                }
+            }
+        }
 
         // NO META-TALK: Start directly with the question.
         // Phrasing focuses on the concept but removes all conversational filler.
-        const questionText = sentence.replace(new RegExp(target, 'i'), '__________');
+        const questionText = sentence.replace(new RegExp(target, 'ig'), '__________');
 
         const distractors = keywords
             .filter(k => k.toLowerCase() !== target.toLowerCase())
@@ -74,8 +108,8 @@ export async function generateQuizFromText(text: string, title: string): Promise
             text: questionText,
             options,
             correctAnswer: correctIdx,
-            explanation: `Corrective Analysis: The correct term is "${target}". In this context, the document establishes it as the primary functional component. Other options are incorrect as they do not fulfill the specific role described in the text.`,
-            reinforcement: `Reinforcement Explanation: Correct. Your selection of "${target}" demonstrates a sound understanding of how this concept functions within the ${subject} framework described.`,
+            explanation: `Corrective Analysis: The correct term is "${target}". The document defines this specific concept within the context of the sentence provided. Other options are alternative concepts found in the text but do not match this definition.`,
+            reinforcement: `Reinforcement Explanation: Correct. Your selection of "${target}" demonstrates a sound understanding of its definition within the ${subject} framework described.`,
             difficulty: questions.length % 2 === 0 ? 'accessible' : 'advanced'
         });
     }

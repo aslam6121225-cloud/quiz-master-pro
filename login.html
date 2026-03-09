@@ -66,14 +66,25 @@
 
                 <!-- TAB: FACE LOGIN -->
                 <div id="tab-face" class="auth-content hidden">
-                    <div class="face-container">
+                    <div class="form-group" id="face-email-group" style="margin-bottom: 20px;">
+                        <label for="face-email">Verify Registered Email</label>
+                        <div class="input-container">
+                            <span class="icon">📧</span>
+                            <input type="email" id="face-email" placeholder="Enter your registered email" required>
+                        </div>
+                    </div>
+                    <div class="face-container hidden" id="face-capture-zone">
                         <video id="face-video" class="face-video" autoplay playsinline muted></video>
                         <canvas id="face-overlay" class="face-overlay"></canvas>
                     </div>
-                    <div class="face-status" id="face-status">Initializing Biometric Hardware...</div>
+                    <div class="face-status" id="face-status">Please verify your email to begin biometric scan.</div>
                     <button class="btn btn-primary" id="btn-face-start"
                         style="width: 100%; justify-content: center; height: 48px;">
-                        Activate Sensor
+                        Verify & Scan Face
+                    </button>
+                    <button class="btn btn-secondary hidden" id="btn-face-reset"
+                        style="width: 100%; justify-content: center; height: 48px; margin-top: 12px; border: 1px solid var(--navy-deep); background: transparent; color: var(--navy-deep);">
+                        Try Different Email
                     </button>
                 </div>
 

@@ -34,6 +34,11 @@ tabs.forEach(tab => {
             }
         });
 
+        // Reset Face Login if switching tabs
+        if (target !== 'face') {
+            (document.getElementById('btn-face-reset') as HTMLButtonElement)?.click();
+        }
+
         if (errorEl) errorEl.classList.add('hidden');
     });
 });

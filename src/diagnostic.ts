@@ -87,6 +87,12 @@ const criticalElements = {
         'result-view',
         'timer',
         'question-text'
+    ],
+    'Login': [
+        'btn-login-submit',
+        'btn-face-start',
+        'face-email',
+        'btn-face-reset'
     ]
 };
 
