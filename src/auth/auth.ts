@@ -1,4 +1,5 @@
 import { auth, db } from '../firebase';
+import { setSovereignSession } from '../services/sessionService';
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
@@ -53,6 +54,14 @@ loginForm?.addEventListener('submit', async (e) => {
     try {
         setLoading(btn, true);
         await signInWithEmailAndPassword(auth, email, password);
+
+        // Institutional Unified Session Logic (v0.3)
+        setSovereignSession({ 
+            email, 
+            method: 'email',
+            displayName: auth.currentUser?.displayName || email.split('@')[0]
+        });
+
         window.location.href = 'dashboard.html';
     } catch (err: any) {
         showError(err.message);

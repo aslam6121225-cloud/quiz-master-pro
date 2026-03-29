@@ -16,7 +16,10 @@
             <nav class="quiz-nav">
                 <a href="dashboard.html" class="nav-brand" style="font-weight: 700;">🎓 QuizMaster Pro</a>
                 <div class="quiz-timer" id="timer">15:00</div>
-                <div style="font-size: 13px; font-weight: 600;">PROFESSIONAL_MODE</div>
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <div style="font-size: 13px; font-weight: 600;">PROFESSIONAL_MODE</div>
+                    <button class="btn btn-outline" id="btn-exit" style="padding: 6px 16px; font-size: 13px; color: var(--navy-deep); border-color: var(--slate-border); background: transparent;">← Exit Quiz</button>
+                </div>
             </nav>
 
             <div class="progress-track">
@@ -28,12 +31,7 @@
                 <div class="quiz-card" id="question-card"
                     style="max-width: 800px; margin: 0 auto; padding: 0; overflow: hidden;">
 
-                    <!-- CONCEPT VISUAL (Premium Feature) -->
-                    <div id="concept-visual" class="concept-visual"
-                        style="height: 240px; background: #e2e8f0; display: none; align-items: center; justify-content: center; overflow: hidden;">
-                        <img id="concept-img" src="" alt="Concept Visualization"
-                            style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
+
 
                     <div style="padding: 32px 40px;">
                         <!-- Question Pill -->
@@ -81,24 +79,137 @@
                             <p style="font-size: 11px; font-weight: 700; color: var(--slate-text);">TIME REMAINING</p>
                             <p style="font-size: 20px; font-weight: 700;" id="res-time">02:45</p>
                         </div>
-                    </div>
-
-                    <div style="border-top: 1px solid var(--slate-border); padding-top: 48px; text-align: left;">
-                        <h3 class="serif" style="margin-bottom: 32px; font-size: 24px;">Post-Quizy Review</h3>
-                        <div id="review-list">
-                            <!-- Injected by quiz.ts -->
+                        <div style="background: var(--paper); padding: 20px; border-radius: 8px; border-left: 4px solid var(--red-error);">
+                            <p style="font-size: 11px; font-weight: 700; color: var(--slate-text);">FOCUS VIOLATIONS</p>
+                            <p style="font-size: 20px; font-weight: 700;" id="res-violations">0</p>
+                        </div>
+                        <div style="background: var(--paper); padding: 20px; border-radius: 8px; border-left: 4px solid var(--blue-royal);">
+                            <p style="font-size: 11px; font-weight: 700; color: var(--slate-text);">INTEGRITY LEVEL</p>
+                            <p style="font-size: 20px; font-weight: 700;" id="res-integrity">100%</p>
                         </div>
                     </div>
 
+                    <!-- Review Trigger Sequence (v0.3) -->
+                    <div style="border-top: 1px solid var(--slate-border); padding-top: 48px; margin-bottom: 32px;">
+                        <button class="btn btn-primary" id="btn-review" style="width: 100%; padding: 18px; font-size: 16px; background: var(--blue-royal); box-shadow: var(--shadow-3);">🔍 Review Institutional Answers</button>
+                    </div>
+
                     <div style="display: flex; gap: 16px; justify-content: center;">
-                        <a href="dashboard.html" class="btn btn-primary" style="padding: 16px 48px;">Return to
-                            Workspace</a>
-                        <button class="btn btn-outline" onclick="location.reload()" style="padding: 16px 48px;">Retake
-                            Quizy</button>
+                        <a href="dashboard.html" class="btn btn-outline" style="padding: 16px 48px;">Return to Workspace</a>
+                        <button class="btn btn-outline" onclick="window.retakeQuiz()" style="padding: 16px 48px;">Retake Quizy</button>
                     </div>
                 </div>
             </main>
+
+            <!-- REVIEW MODE (v0.3 - Smart Rationale Integration) -->
+            <main id="review-view" class="hidden">
+                 <div class="result-header" style="text-align: center; margin-bottom: 40px;">
+                    <h1 class="serif" style="font-size: 32px; margin-bottom: 8px;">Concept Analytics & Review</h1>
+                    <p class="text-muted">Detailed rationale for each analytical vector</p>
+                </div>
+
+                <div id="review-cards-container" style="display: flex; flex-direction: column; gap: 24px; padding-bottom: 60px;">
+                    <!-- Review cards injected here -->
+                </div>
+
+                <div style="display: flex; justify-content: center;">
+                    <button class="btn btn-primary" id="btn-review-close" style="padding: 16px 64px;">Back to Results Summary</button>
+                </div>
+            </main>
         </div>
+    </div>
+
+    <style>
+        .review-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease;
+        }
+        .review-card:hover { transform: translateY(-2px); }
+        
+        .insight-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--slate-border);
+            color: var(--blue-royal);
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--blue-royal);
+            border-radius: 50%;
+            animation: insight-pulse 2s infinite;
+        }
+
+        @keyframes insight-pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(30, 64, 175, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(30, 64, 175, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(30, 64, 175, 0); }
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-correct { background: #DCFCE7; color: #166534; }
+        .status-incorrect { background: #FEE2E2; color: #991B1B; }
+    </style>
+
+    <!-- RETAKE LOADING OVERLAY -->
+    <div id="retake-overlay" style="
+        display: none;
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(6px);
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+    ">
+        <div style="
+            background: white;
+            border-radius: 16px;
+            padding: 48px 56px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 32px 64px rgba(0,0,0,0.3);
+        ">
+            <div style="font-size: 48px; margin-bottom: 16px;">🤖</div>
+            <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">Regenerating Quiz</h2>
+            <p style="font-size: 14px; color: #64748b; margin-bottom: 28px;">Gemini AI is crafting brand new questions from your original document...</p>
+
+            <!-- Animated dots loader -->
+            <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 28px;">
+                <div style="width:10px;height:10px;background:#1E40AF;border-radius:50%;animation:bounce 1.2s infinite 0s"></div>
+                <div style="width:10px;height:10px;background:#1E40AF;border-radius:50%;animation:bounce 1.2s infinite 0.2s"></div>
+                <div style="width:10px;height:10px;background:#1E40AF;border-radius:50%;animation:bounce 1.2s infinite 0.4s"></div>
+            </div>
+
+            <p id="retake-status" style="font-size: 13px; font-weight: 600; color: #1E40AF; min-height: 20px;">Initializing...</p>
+        </div>
+
+        <style>
+            @keyframes bounce {
+                0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+                40% { transform: translateY(-12px); opacity: 1; }
+            }
+        </style>
     </div>
 
     <!-- SCRIPTS -->

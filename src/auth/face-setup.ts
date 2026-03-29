@@ -58,6 +58,39 @@ window.addEventListener('start-camera', async () => {
     }
 });
 
+function updateStatus(message: string, type: 'scanning' | 'success' | 'error' | 'default' = 'default') {
+    if (!statusDetect) return;
+    
+    // Clear previous states
+    statusDetect.classList.remove('scanning', 'success', 'error');
+    
+    // Add new state
+    if (type !== 'default') {
+        statusDetect.classList.add(type);
+    }
+    
+    // Set Icon and message
+    let icon = '';
+    switch(type) {
+        case 'scanning': icon = '🤖'; break;
+        case 'success': icon = '✅'; break;
+        case 'error': icon = '❌'; break;
+        default: icon = 'ℹ️';
+    }
+    
+    statusDetect.innerHTML = `<span class="status-icon">${icon}</span> <span class="status-message">${message}</span>`;
+}
+
+function getReadableStatus(code: string): string {
+    switch (code) {
+        case 'NO_TARGET': return 'Scanning for facial geometry...';
+        case 'ALIGN_FACE': return 'Please center your face in the frame.';
+        case 'LOW_LIGHT': return 'Lighting too low. Adjust environment.';
+        case 'OPTIMAL': return 'Biometric geometry aligned and ready.';
+        default: return 'Initializing scanner...';
+    }
+}
+
 // 3. Detection & Quality Check
 async function runDetectionLoop() {
     if (!isAnalyzing || !video || !currentUserEmail) return;
@@ -65,8 +98,8 @@ async function runDetectionLoop() {
     const analysis = await faceService.analyzeFrame(video);
 
     if (analysis) {
-        if (statusDetect) statusDetect.textContent = analysis.status;
-        if (statusQuality) statusQuality.textContent = `${analysis.fidelity}%`;
+        updateStatus(getReadableStatus(analysis.status), "scanning");
+        if (statusQuality) statusQuality.textContent = `${Math.floor(analysis.fidelity)}%`;
 
         if (analysis.status === 'OPTIMAL' && !countdownEl?.style.display || countdownEl?.style.display === 'none') {
             btnCapture.disabled = false;
@@ -129,9 +162,10 @@ async function finalizeEnrollment() {
 
     // Save to Sovereign Storage (IndexedDB + StorageService)
     if (currentUserEmail) {
-        // Save to Face Store in IndexedDB
+        // Institutional Sovereign Enrollment logic
         await storage.save('faceData', {
             email: currentUserEmail,
+            name: auth.currentUser?.displayName || currentUserEmail.split('@')[0],
             descriptor: Array.from(averaged),
             capturedAt: new Date().toISOString()
         });

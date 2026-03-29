@@ -1,41 +1,17 @@
-# QuizMaster Pro: Advanced Cognitive Learning Architect
+# AI-Enabled Quiz Master Pro
 
-QuizMaster Pro is a premium, AI-driven educational platform designed to transform static PDF documents into dynamic, personalized, and error-free learning experiences. Using advanced NLP and cognitive modeling, it automates the creation of high-utility quizzes and subject mastery resources.
+An MNC-level architectural implementation of a dynamic, AI-powered assessment engine that analyzes uploaded educational documents (PDFs), extracts core concepts, and dynamically generates unique quizzes.
 
-## 🚀 Key Features
+## Key Highlights of the Implementation
 
-### 1. Intelligent Ingestion & Analysis
-- **Noise Filtering:** Automatically stripped of institutional headers, footers, page numbers, and administrative metadata to focus on core concepts.
-- **Subject Identification:** Automatically detects the field of study (Computer Science, Medicine, Law, Engineering, etc.) to tailor the learning tone.
+*   **Unique Quiz Generation**: Even if multiple users upload the exact same material, the platform prevents duplication by algorithmically shuffling questions and answer permutations via our Uniqueness Engine.
+*   **Anti-Theft Mechanism**: No two quizzes look identical. The AI dynamically samples different structural chunks from the document to ensure fairness, originality, and security against cheating.
+*   **Professional Formatting**: The AI is strictly prompted to avoid predefined or amateur quiz syntax (e.g., "Identify the concept: ..."). Instead, it utilizes structural context to produce natural, industry-standard question phrasing that tests analytical understanding.
+*   **Randomized Answer Sets**: Options are intelligently shuffled at runtime, meaning no one can guess patterns or assume repeated answers across different sessions.
+*   **Concept-Driven Design**: Every quiz is built actively from the actual semantic content of the PDF rather than generic stored templates. This makes the dynamically generated assessments completely indistinguishable from manually crafted professional quizzes.
 
-### 2. Advanced AI Quiz Engine
-- **Unique Generation:** Exactly 20 Multiple Choice Questions (MCQs) per session with 4 options each.
-- **Anti-Plagiarism Mode:** Randomized phrasing and conceptual nuance ensure no two quiz sessions are identical.
-- **Cognitive Scaling:** Questions are engineered to be accessible for foundation-building while remaining challenging for top-tier mastery.
-- **Fill-in-the-Blank Precision:** Focuses on key conceptual nodes for focused cognitive recall.
+## Architecture & Workflow
 
-### 3. Dual-Logic Feedback System
-- **Delayed Revelation:** Scores and answers are hidden until completion to ensure maximum mental engagement.
-- **Corrective Explanations:** Real-time logic teardowns for incorrect answers, explaining *why* a choice was wrong and the rationale for the correct one.
-- **Reinforcement Logic:** Positive confirmation for correct answers to solidify effective cognitive patterns.
+This system ensures that the quizzes generated impress participants and consistently meet the expectations of an MNC-level industrial project — entirely free from repetition, predictable memory structures, or weak distractors.
 
-### 4. Subject Mastery Pack
-Every session concludes with a curated external resource bundle:
-- **YouTube Tutorial Sequences:** Three subject-specific video paths.
-- **Wikipedia Deep-Dive:** Direct link to the primary theoretical domain.
-- **Global Research Query:** Pre-optimized Google search for 2024 academic data.
-
-## 🛠️ Technology Stack
-- **Frontend:** HTML5, Vanilla CSS (Glassmorphism UI), TypeScript
-- **Processing:** Vite, PDF.js (Client-side text extraction)
-- **Database/Auth:** Firebase, IndexedDB (Local-first processing)
-- **Security:** Integrated Biometric (Face) Authentication
-
-## 📖 How to Use
-1. **Upload:** Drop any educational PDF into the "Create" workspace.
-2. **Process:** The AI Architect extracts concepts and identifies the subject domain.
-3. **Master:** Engage with the generated 20-question randomized MCQ sequence.
-4. **Review:** Analyze your performance with dual-logic feedback and explore the Mastery Pack.
-
----
-*Built for excellence. Optimized for mastery.*
+Powered by Gemini 2.5 Flash API and local JavaScript parsing logic.

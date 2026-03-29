@@ -1,7 +1,7 @@
 {
     "name": "quiz-master",
     "private": true,
-    "version": "0.0.0",
+    "version": "0.3.0-Alpha",
     "type": "module",
     "scripts": {
         "dev": "vite",

@@ -1,6 +1,8 @@
 import { auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { storage } from './services/storageService';
+import { showInfoModal } from './services/uiService';
+import { checkAuth } from './services/sessionService';
 
 /**
  * QuizMaster Pro | Dashboard Controller
@@ -9,19 +11,28 @@ import { storage } from './services/storageService';
 
 declare var Chart: any;
 
+// 1. Universal Institutional Guard (v0.3)
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    
+    // Instant Persona Rendering (v0.3)
+    const cachedName = sessionStorage.getItem('displayName');
+    const nameEl = document.getElementById('user-display-name');
+    if (cachedName && nameEl) {
+        nameEl.textContent = cachedName;
+    }
+
+    console.log("Institutional Node Verified:", sessionStorage.getItem('userEmail'));
+});
+
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         initDashboard(user);
     } else {
-        // Fallback: Check for Sovereign Session (Face Login)
-        const sovEmail = sessionStorage.getItem('sovereign_session_email');
-        const sovTime = sessionStorage.getItem('sovereign_session_time');
-        const isRecent = sovTime && (Date.now() - parseInt(sovTime)) < 3600000; // 1hr pulse
-
-        if (sovEmail && isRecent) {
-            initDashboard({ email: sovEmail, displayName: sovEmail.split('@')[0] });
-        } else {
-            window.location.href = 'login.html';
+        const userEmail = sessionStorage.getItem('userEmail');
+        const displayName = sessionStorage.getItem('displayName');
+        if (userEmail) {
+            initDashboard({ email: userEmail, displayName: displayName || userEmail.split('@')[0] });
         }
     }
 });
@@ -68,20 +79,51 @@ async function initDashboard(user: any) {
     renderMetrics(results);
     renderPerformanceChart(results);
     renderTopicPerformance(results);
+    renderRecentReviews(results);
 
     // 4. Interactivity & Event Listeners
     setupEventListeners(results);
 }
 
+function renderRecentReviews(results: any[]) {
+    const container = document.getElementById('recent-reviews-container');
+    if (!container) return;
+
+    if (results.length === 0) return;
+
+    // Get the top 3 most recent results
+    const recent = [...results].reverse().slice(0, 3);
+    
+    container.innerHTML = recent.map(r => `
+        <div style="background: rgba(15, 23, 42, 0.02); padding: 12px; border-radius: 8px; border: 1px solid rgba(15, 23, 42, 0.05); display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">
+                <p style="font-size: 13px; font-weight: 700; color: var(--navy-deep); margin-bottom: 2px;">${r.quizTitle.split(':')[1]?.trim() || 'General Resource'}</p>
+                <p style="font-size: 11px; color: var(--slate-text);">${new Date(r.timestamp).toLocaleDateString()}</p>
+            </div>
+            <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+                <div style="background: ${r.score >= 70 ? '#DCFCE7' : '#FEE2E2'}; color: ${r.score >= 70 ? '#166534' : '#991B1B'}; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 800;">${r.score}%</div>
+                <a href="quiz.html?reviewId=${r.id}" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px; border-color: var(--blue-royal); color: var(--blue-royal); background: transparent;">Review Log</a>
+            </div>
+        </div>
+    `).join('');
+}
+
 function renderMetrics(results: any[]) {
     const total = results.length;
     const avg = total > 0 ? results.reduce((s, r) => s + r.score, 0) / total : 0;
-    const totalTimeRaw = results.reduce((s, r) => s + (r.timeSpentSeconds || 0), 0);
-    const totalHours = (totalTimeRaw / 3600).toFixed(1);
+    const totalTimeSec = results.reduce((s, r) => s + (r.timeSpentSeconds || 0), 0);
+    const totalHours = (totalTimeSec / 3600).toFixed(1);
 
-    updateText('count-quizzes', total.toString());
-    updateText('count-accuracy', `${avg.toFixed(1)}%`);
-    updateText('count-time', `${totalHours}h`);
+    const countEl = document.getElementById('count-quizzes');
+    const accEl = document.getElementById('count-accuracy');
+    const timeEl = document.getElementById('count-time');
+
+    if (countEl) countEl.textContent = total.toString();
+    if (accEl) accEl.textContent = `${Math.round(avg)}%`;
+    if (timeEl) timeEl.textContent = `${totalHours}h`;
+
+    // Update charts
+    renderMasteryHeatmap(results);
 
     // Last Quiz Logic
     const lastResult = results.length > 0 ? results[results.length - 1] : null;
@@ -96,17 +138,19 @@ function renderMetrics(results: any[]) {
 
 function setupEventListeners(results: any[]) {
     // Logout
-    document.getElementById('btn-logout')?.addEventListener('click', () => {
+    const handleLogout = () => {
         sessionStorage.removeItem('sovereign_session_email');
         sessionStorage.removeItem('sovereign_session_time');
         signOut(auth).then(() => window.location.href = 'index.html');
-    });
+    };
+    document.getElementById('btn-logout')?.addEventListener('click', handleLogout);
+    document.getElementById('btn-logout-top')?.addEventListener('click', handleLogout);
 
     // Quick Action: Random Challenge
     document.getElementById('btn-random-challenge')?.addEventListener('click', async () => {
         const bundles = await storage.getAll('quizzes');
         if (bundles.length === 0) {
-            alert("No Quizy bundles found. Upload something first!");
+            await showInfoModal("Empty Archive", "No Quizy bundles found in your institutional archive. Please upload material first.", "🎲");
             return;
         }
         const randomBundle = bundles[Math.floor(Math.random() * bundles.length)];
@@ -114,19 +158,19 @@ function setupEventListeners(results: any[]) {
     });
 
     // Quick Action: Review Mistakes
-    document.getElementById('btn-review-mistakes')?.addEventListener('click', () => {
+    document.getElementById('btn-review-mistakes')?.addEventListener('click', async () => {
         const lowScore = results.filter(r => r.score < 70);
         if (lowScore.length === 0) {
-            alert("Excellence maintained! No critical mistakes found to review.");
+            await showInfoModal("Excellence Achieved", "Maximum proficiency maintained! No critical mistakes found to review at this time.", "⭐");
             return;
         }
-        alert(`You have ${lowScore.length} sessions needing review. Visit 'My Quizzes' to re-take specific sequences.`);
+        await showInfoModal("Remediation Required", `You have ${lowScore.length} sessions needing conceptual review. Visit 'My Quizzes' to re-take specific sequences.`, "🔬");
         window.location.href = 'my-quizzes.html';
     });
 
     // Export Data
-    document.getElementById('btn-export-data')?.addEventListener('click', () => {
-        if (results.length === 0) return alert("No data to export.");
+    document.getElementById('btn-export-data')?.addEventListener('click', async () => {
+        if (results.length === 0) return await showInfoModal("No Data", "No performance records available for protocol export.", "📤");
         const csv = "Date,Topic,Score,Time\n" + results.map(r =>
             `${new Date(r.timestamp).toLocaleDateString()},${r.topic},${r.score},${r.timeSpentSeconds}`
         ).join("\n");
@@ -139,46 +183,46 @@ function setupEventListeners(results: any[]) {
     });
 
     // Notifications Logic
-    document.getElementById('btn-notifications')?.addEventListener('click', () => {
-        alert("You're all caught up! No pending alerts.");
+    document.getElementById('btn-notifications')?.addEventListener('click', async () => {
+        await showInfoModal("All Clear", "You're all caught up! No pending alerts or security protocols needing attention.", "🔔");
     });
 
     // Navigation Logic
-    const performanceSection = document.querySelector('.performance-section');
-    document.getElementById('nav-analytics')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        performanceSection?.scrollIntoView({ behavior: 'smooth' });
-    });
 
-    document.getElementById('nav-achievements')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        // Since we don't have a dedicated achievements section yet, scroll to metrics
-        document.querySelector('.metrics-grid')?.scrollIntoView({ behavior: 'smooth' });
-    });
+
 
     // Settings Modal Logic
     const modal = document.getElementById('settings-modal');
-    const openSettings = () => {
+    const openSettings = async () => {
         if (modal) {
             modal.style.display = 'flex';
-            // Populate Data
+            
             const currentUser = auth.currentUser;
-            const sovEmail = sessionStorage.getItem('sovereign_session_email');
+            const sovEmail = sessionStorage.getItem('userEmail');
+            const sovName = sessionStorage.getItem('displayName');
 
             (document.getElementById('setting-email') as HTMLInputElement).value = currentUser?.email || sovEmail || 'Guest Mode';
-            (document.getElementById('setting-name') as HTMLInputElement).value = currentUser?.displayName || sovEmail?.split('@')[0] || 'Guest';
+            (document.getElementById('setting-name') as HTMLInputElement).value = currentUser?.displayName || sovName || 'Guest';
+
+            // Biometric Identity Sync (v0.3)
+            const biometricEl = document.getElementById('biometric-status');
+            if (biometricEl) {
+                const faceData = await storage.getAll('faceData');
+                const hasProfile = faceData.length > 0;
+                biometricEl.textContent = hasProfile ? 'Biometric Identity: Active & Secure' : 'Biometric Identity: No Enrollment Found';
+                biometricEl.style.color = hasProfile ? 'var(--green-success)' : 'var(--slate-text)';
+            }
         }
     };
 
-    ['nav-settings', 'nav-profile'].forEach(id => {
-        document.getElementById(id)?.addEventListener('click', (e) => {
-            e.preventDefault();
-            openSettings();
-        });
+    document.getElementById('nav-account-settings')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        openSettings();
     });
 
-    document.getElementById('btn-help')?.addEventListener('click', () => {
-        alert("Need assistance? Contact our support team at support@quizy.pro or check the documentation in the Library.");
+
+    document.getElementById('btn-help')?.addEventListener('click', async () => {
+        await showInfoModal("Institutional Support", "Need assistance? Access our 24/7 technical team at protocols@quizy.pro or review the documentation in the Archive Library.", "🔭");
     });
 
     document.getElementById('close-settings')?.addEventListener('click', () => {
@@ -313,4 +357,61 @@ function renderTopicPerformance(results: any[]) {
 function updateText(id: string, text: string) {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
+}
+
+function renderMasteryHeatmap(results: any[]) {
+    const canvas = document.getElementById('mastery-heatmap') as HTMLCanvasElement;
+    if (!canvas) return;
+
+    // Aggregate Topics
+    const topicMap: Record<string, { total: number, count: number }> = {};
+    results.forEach(r => {
+        const topic = r.topic || 'General';
+        if (!topicMap[topic]) topicMap[topic] = { total: 0, count: 0 };
+        topicMap[topic].total += r.score;
+        topicMap[topic].count++;
+    });
+
+    const labels = Object.keys(topicMap);
+    const dataPoints = labels.map(l => Math.round(topicMap[l].total / topicMap[l].count));
+
+    if (labels.length === 0) return;
+    
+    // Ensure enough axes for radar
+    const finalLabels = [...labels];
+    const finalData = [...dataPoints];
+    if (finalLabels.length < 3) {
+        finalLabels.push("Standard Domain", "Institutional Vector");
+        finalData.push(0, 0);
+    }
+
+    new (window as any).Chart(canvas, {
+        type: 'radar',
+        data: {
+            labels: finalLabels,
+            datasets: [{
+                label: 'Subject Mastery Index',
+                data: finalData,
+                backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                borderColor: 'rgba(37, 99, 235, 0.8)',
+                pointBackgroundColor: 'rgba(37, 99, 235, 1)',
+                pointBorderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(15, 23, 42, 0.05)' },
+                    grid: { color: 'rgba(15, 23, 42, 0.05)' },
+                    suggestedMin: 0,
+                    suggestedMax: 100,
+                    pointLabels: { font: { weight: 'bold', size: 10 } }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
 }

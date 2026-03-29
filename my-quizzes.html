@@ -58,6 +58,11 @@
                 <a href="my-quizzes.html" class="nav-item active">📝 My Quizzes</a>
                 <a href="create.html" class="nav-item">📤 Upload Material</a>
             </nav>
+
+            <nav class="nav-section sidebar-bottom" style="margin-top: auto; padding-top: 24px;">
+                <p class="nav-label">Account</p>
+                <a href="#" class="nav-item" id="btn-logout">🚪 Sign Out</a>
+            </nav>
         </aside>
 
         <main class="main-content">
@@ -78,7 +83,7 @@
 
     <script type="module">
         import { auth } from './src/firebase';
-        import { onAuthStateChanged } from 'firebase/auth';
+        import { onAuthStateChanged, signOut } from 'firebase/auth';
         import { storage } from './src/services/storageService';
 
         const container = document.getElementById('quiz-library');
@@ -110,6 +115,15 @@
             } else {
                 window.location.href = 'login.html';
             }
+        });
+
+        // Universal Logout Handler
+        document.getElementById('btn-logout')?.addEventListener('click', () => {
+            sessionStorage.removeItem('sovereign_session_email');
+            sessionStorage.removeItem('sovereign_session_time');
+            signOut(auth).then(() => {
+                window.location.href = 'index.html';
+            });
         });
 
         window.deleteBundle = async (id) => {

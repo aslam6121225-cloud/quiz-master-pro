@@ -1,13 +1,10 @@
 import { auth } from './firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { storage } from './services/storageService';
 import { generateQuizFromText } from './services/aiService';
+import { showInfoModal } from './services/uiService';
+import { checkAuth } from './services/sessionService';
 import * as pdfjsLib from 'pdfjs-dist';
-
-/**
- * Quizy Pro | PDF Processor & Quiz Generator
- * Philosophy: 100% Client-Side, Pattern-Based Generation
- */
 
 // Use stable CDN worker (version 3.11.174)
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -15,99 +12,136 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input') as HTMLInputElement;
 const btnGenerate = document.getElementById('btn-generate') as HTMLButtonElement;
-const progressOverlay = document.getElementById('processing-overlay');
-const progressBar = document.getElementById('progress-bar');
 const successView = document.getElementById('success-view');
 const settingsCard = document.getElementById('generation-settings');
 
-let rawText = "";
 let currentFile: File | null = null;
 let userEmail: string | null = null;
 
-onAuthStateChanged(auth, (user) => {
-    if (user) userEmail = user.email;
-    else window.location.href = 'login.html';
+// 1. Universal Institutional Guard (v0.3)
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    console.log("Generation Node Verified:", sessionStorage.getItem('userEmail'));
 });
 
-// 1. Interaction Handlers
-dropZone?.addEventListener('click', () => fileInput.click());
-fileInput?.addEventListener('change', (e: any) => handleFile(e.target.files[0]));
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        userEmail = user.email;
+    } else {
+        userEmail = sessionStorage.getItem('userEmail');
+    }
+});
 
-dropZone?.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+// --- UPLOAD LOGIC ---
+dropZone?.addEventListener('click', () => fileInput?.click());
+
+dropZone?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+});
+
 dropZone?.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone?.addEventListener('drop', (e: any) => {
+
+dropZone?.addEventListener('drop', (e) => {
     e.preventDefault();
     dropZone.classList.remove('drag-over');
-    handleFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer?.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+    }
 });
 
-// Remove File
-document.getElementById('btn-remove-file')?.addEventListener('click', () => {
-    currentFile = null;
-    document.getElementById('file-preview')?.classList.add('hidden');
-    btnGenerate.disabled = true;
+fileInput?.addEventListener('change', (e) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files?.length) {
+        handleFile(target.files[0]);
+    }
 });
 
-// Update Question Count Label
-document.getElementById('input-num')?.addEventListener('input', (e: any) => {
-    const label = document.getElementById('label-num');
-    if (label) label.textContent = e.target.value;
-    const genBtn = document.getElementById('btn-generate');
-    if (genBtn) genBtn.textContent = `Generate 15 Unique Quizy Sessions (${e.target.value * 15} Scenarios)`;
+function handleFile(file: File) {
+    if (file.type !== 'application/pdf' && !file.name.endsWith('.txt')) {
+        showToast("❌ Strictly: PDF or Educational Text material only.");
+        return;
+    }
+    currentFile = file;
+    document.getElementById('file-preview')?.classList.remove('hidden');
+    document.getElementById('prev-name')!.textContent = file.name;
+    document.getElementById('prev-meta')!.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB • Analyzing Source...`;
+    btnGenerate.disabled = false;
+    dropZone?.classList.add('hidden');
+}
+
+// --- SETTINGS UI ---
+const inputNum = document.getElementById('input-num') as HTMLInputElement;
+const labelNum = document.getElementById('label-num');
+inputNum?.addEventListener('input', () => {
+    if (labelNum) labelNum.textContent = inputNum.value;
+    btnGenerate.textContent = `Generate ${inputNum.value} Unique Questions`;
 });
 
-// Progression Modes
 document.querySelectorAll('.progression-option').forEach(opt => {
     opt.addEventListener('click', () => {
-        document.querySelectorAll('.progression-option').forEach(o => o.classList.remove('active'));
+        document.querySelectorAll('.progression-option').forEach(el => el.classList.remove('active'));
         opt.classList.add('active');
     });
 });
 
-async function handleFile(file: File) {
-    if (!file || (file.type !== 'application/pdf' && file.type !== 'text/plain')) return;
-    currentFile = file;
-
-    // Update UI
-    document.getElementById('file-preview')?.classList.remove('hidden');
-    document.getElementById('prev-name')!.textContent = file.name;
-    document.getElementById('prev-meta')!.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
-    btnGenerate.disabled = false;
-}
-
-// 2. Generation Engine
+// --- GENERATION ORCHESTRATION (v0.3 | Neural Scan) ---
 btnGenerate?.addEventListener('click', async () => {
     if (!currentFile || !userEmail) return;
 
-    progressOverlay?.classList.remove('hidden');
+    let requestedCount = parseInt(inputNum.value) || 10;
+    const processingView = document.getElementById('processing-view');
+    const tickerEl = document.getElementById('status-ticker');
+    const difficultyMode = document.querySelector('.progression-option.active')?.getAttribute('data-mode') || 'mixed';
+    const timeLimit = parseInt((document.getElementById('input-time') as HTMLSelectElement).value);
+
     settingsCard?.classList.add('hidden');
+    processingView?.classList.remove('hidden');
 
     try {
-        // STEP 1: EXTRACT
-        updateStep('extract', 'active');
-        rawText = currentFile.type === 'application/pdf'
+        // 1. Status Ticker Lifecycle
+        const messages = [
+            "Scanning Document Topology...",
+            "Extracting High-Level Concepts...",
+            "Synthesizing Scenario-Based Challenges...",
+            "Finalizing Institutional Integrity Check..."
+        ];
+        let msgIdx = 0;
+        const tickerInterval = setInterval(() => {
+            if (tickerEl) {
+                msgIdx = (msgIdx + 1) % messages.length;
+                tickerEl.textContent = messages[msgIdx].toUpperCase() + "...";
+            }
+        }, 2000);
+
+        // 2. Text Extraction
+        let rawText = currentFile.type === 'application/pdf'
             ? await extractPDFText(currentFile)
             : await currentFile.text();
-        updateProgress(25);
-        updateStep('extract', 'complete');
+            
+        // 3. Document Capacity Estimate
+        const cleanText = rawText
+            .replace(/\f/g, '\n')
+            .replace(/(Page \d+ of \d+|Institutional Header|Confidential|Footer:.*)/gi, '')
+            .split('\n')
+            .filter(line => line.trim().length > 20)
+            .join(' ');
+        
+        const sentenceCount = (cleanText.match(/[^.!?]+[.!?]+/g) || []).length;
+        const maxPossible = Math.max(5, Math.floor(sentenceCount / 1.5));
+        
+        if (requestedCount > maxPossible && currentFile.type === 'application/pdf') {
+            requestedCount = maxPossible;
+            showToast(`Document is short. Limit adjusted to ${maxPossible} questions max.`);
+        }
 
-        // STEP 2: KEYWORDS
-        updateStep('keywords', 'active');
-        await simulateDelay(1000);
-        updateProgress(50);
-        updateStep('keywords', 'complete');
+        // 4. Gemini Flash Insight Generation
+        const quizBundle = await generateQuizFromText(rawText, currentFile.name, requestedCount, difficultyMode);
 
-        // STEP 3: GENERATE (Using Advanced Cognitive Learning Architect Service)
-        updateStep('questions', 'active');
-        const quizBundle = await generateQuizFromText(rawText, currentFile.name);
-        updateProgress(80);
-        updateStep('questions', 'complete');
+        const docId = `doc_${Date.now()}`;
+        const quizId = `bundle_${docId}`;
 
-        // STEP 4: FINALIZE
-        updateStep('finalize', 'active');
-        const docId = Date.now().toString();
-
-        // Save Master PDF Record
+        // 5. Sovereign Persistence
         await storage.save('pdfs', {
             id: docId,
             name: currentFile.name,
@@ -116,12 +150,8 @@ btnGenerate?.addEventListener('click', async () => {
             timestamp: Date.now()
         });
 
-        const timeLimit = parseInt((document.getElementById('input-time') as HTMLSelectElement).value);
-        const difficultyMode = document.querySelector('.progression-option.active')?.getAttribute('data-mode') || 'mixed';
-
-        // Save Quizy Bundle with AI-generated content
         await storage.save('quizzes', {
-            id: `bundle_${docId}`,
+            id: quizId,
             docId,
             owner: userEmail,
             subject: quizBundle.subject,
@@ -132,20 +162,33 @@ btnGenerate?.addEventListener('click', async () => {
             timestamp: Date.now()
         });
 
-        updateProgress(100);
-        updateStep('finalize', 'complete');
+        clearInterval(tickerInterval);
 
-        // SUCCESS
+        // 6. Seamless Transition Sequence
+        processingView?.classList.add('fade-out');
+
         setTimeout(() => {
-            progressOverlay?.classList.add('hidden');
+            processingView?.classList.add('hidden');
             successView?.classList.remove('hidden');
-        }, 800);
+            successView?.classList.add('fade-in');
 
-    } catch (err) {
-        console.error("Generation Error:", err);
-        alert("Quizy Generation Failed. Check document accessibility.");
-        progressOverlay?.classList.add('hidden');
+            const successTitle = document.getElementById('success-title');
+            if (successTitle) successTitle.textContent = `${quizBundle.questions.length} Diagnostic Vectors Generated!`;
+
+            const startBtn = successView?.querySelector('a.btn-primary') as HTMLAnchorElement;
+            if (startBtn) startBtn.href = `quiz.html?id=${quizId}`;
+
+            // Institutional Auto-Launch
+            setTimeout(() => {
+                window.location.href = `quiz.html?id=${quizId}`;
+            }, 1000);
+        }, 500);
+
+    } catch (err: any) {
+        console.error("Critical Generation Failure:", err);
+        processingView?.classList.add('hidden');
         settingsCard?.classList.remove('hidden');
+        await showInfoModal("Generation Failed", `Institutional Protocol Error: ${err.message || 'Check document accessibility'}.`, "⚠️");
     }
 });
 
@@ -164,12 +207,12 @@ async function extractPDFText(file: File): Promise<string> {
     return fullText;
 }
 
-function updateProgress(val: number) { if (progressBar) progressBar.style.width = `${val}%`; }
-function updateStep(id: string, status: 'active' | 'complete') {
-    const el = document.getElementById(`step-${id}`);
-    if (el) {
-        el.className = `progress-item ${status}`;
-        if (status === 'complete') el.innerHTML = "✓ " + el.innerHTML;
+function showToast(message: string) {
+    const toast = document.getElementById('toast-notify');
+    const toastMsg = document.getElementById('toast-message');
+    if (toast && toastMsg) {
+        toastMsg.textContent = message;
+        toast.style.bottom = '20px';
+        setTimeout(() => { toast.style.bottom = '-100px'; }, 4000);
     }
 }
-function simulateDelay(ms: number) { return new Promise(r => setTimeout(r, ms)); }
