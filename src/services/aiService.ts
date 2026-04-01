@@ -58,9 +58,15 @@ export async function generateQuizFromText(text: string, title: string, question
     };
 
     // 1. Content Extraction & Deep Clean (Chunking for Stability)
-    const cleanText = text
-        .replace(/[^a-zA-Z0-9 .?,]/g, '') // Strip everything except basic alpha-numeric
-        .substring(0, isLite ? 2500 : 4000);
+    const alphaNumericText = text.replace(/[^a-zA-Z0-9 .?,]/g, ''); // Strip everything except basic alpha-numeric
+    const chunkSize = isLite ? 2500 : 4000;
+    
+    // Dynamic Randomization: Pick a random slice of the text to ensure fresh questions every time
+    let startIndex = 0;
+    if (alphaNumericText.length > chunkSize) {
+        startIndex = Math.floor(Math.random() * (alphaNumericText.length - chunkSize));
+    }
+    const cleanText = alphaNumericText.substring(startIndex, startIndex + chunkSize);
 
     const subject = identifySubject(cleanText);
     const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
@@ -146,7 +152,7 @@ JSON SCHEMA:
                 model: hfModel,
                 messages: [{ role: "user", content: finalPrompt }],
                 max_tokens: 2000,
-                temperature: 0.2
+                temperature: 0.6 // Increased from 0.2 to 0.6 to enforce creative variation
             })
         });
 
