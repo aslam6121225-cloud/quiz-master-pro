@@ -70,6 +70,15 @@ function handleFile(file: File) {
     dropZone?.classList.add('hidden');
 }
 
+// --- REMOVE FILE LOGIC ---
+document.getElementById('btn-remove-file')?.addEventListener('click', () => {
+    currentFile = null;
+    fileInput.value = '';
+    document.getElementById('file-preview')?.classList.add('hidden');
+    dropZone?.classList.remove('hidden');
+    btnGenerate.disabled = true;
+});
+
 // --- SETTINGS UI ---
 const inputNum = document.getElementById('input-num') as HTMLInputElement;
 const labelNum = document.getElementById('label-num');
@@ -114,13 +123,16 @@ btnGenerate?.addEventListener('click', async () => {
             }
         }, 2000);
 
-        // 2. Text Extraction
+        // 2. Text Extraction & Smart Chunking (Stability Layer)
         let rawText = currentFile.type === 'application/pdf'
             ? await extractPDFText(currentFile)
             : await currentFile.text();
             
+        // Cleaning and trimming to 6,000 characters for token stability
+        const liteText = rawText.substring(0, 6000).replace(/[^\x20-\x7E\n]/g, '');
+            
         // 3. Document Capacity Estimate
-        const cleanText = rawText
+        const cleanText = liteText
             .replace(/\f/g, '\n')
             .replace(/(Page \d+ of \d+|Institutional Header|Confidential|Footer:.*)/gi, '')
             .split('\n')
@@ -132,11 +144,17 @@ btnGenerate?.addEventListener('click', async () => {
         
         if (requestedCount > maxPossible && currentFile.type === 'application/pdf') {
             requestedCount = maxPossible;
-            showToast(`Document is short. Limit adjusted to ${maxPossible} questions max.`);
+            showToast(`Document chunk analyzed. Limit adjusted to ${maxPossible} questions.`);
         }
 
-        // 4. Gemini Flash Insight Generation
-        const quizBundle = await generateQuizFromText(rawText, currentFile.name, requestedCount, difficultyMode);
+        // 4. Dual-AI Logic
+        let quizBundle;
+        try {
+            quizBundle = await generateQuizFromText(liteText, currentFile.name, requestedCount, difficultyMode);
+        } catch (err) {
+            console.warn("Dual-AI Exhausted. Retrying with Sovereign Lite-Protocol...");
+            quizBundle = await generateQuizFromText(liteText, currentFile.name, 3, 'mixed', [], true);
+        }
 
         const docId = `doc_${Date.now()}`;
         const quizId = `bundle_${docId}`;
@@ -188,7 +206,18 @@ btnGenerate?.addEventListener('click', async () => {
         console.error("Critical Generation Failure:", err);
         processingView?.classList.add('hidden');
         settingsCard?.classList.remove('hidden');
-        await showInfoModal("Generation Failed", `Institutional Protocol Error: ${err.message || 'Check document accessibility'}.`, "⚠️");
+        
+        // Final Stability: Force Lite Option
+        const forceLite = await showInfoModal(
+            "Generation Failed", 
+            `Institutional Protocol Error: ${err.message || 'Check document complexity'}.`, 
+            "⚠️",
+            "Force Lite Generation"
+        );
+
+        if (forceLite) {
+            btnGenerate.click(); // Re-trigger (logic will handle lite-retry)
+        }
     }
 });
 

@@ -60,24 +60,24 @@ window.addEventListener('start-camera', async () => {
 
 function updateStatus(message: string, type: 'scanning' | 'success' | 'error' | 'default' = 'default') {
     if (!statusDetect) return;
-    
+
     // Clear previous states
     statusDetect.classList.remove('scanning', 'success', 'error');
-    
+
     // Add new state
     if (type !== 'default') {
         statusDetect.classList.add(type);
     }
-    
+
     // Set Icon and message
     let icon = '';
-    switch(type) {
+    switch (type) {
         case 'scanning': icon = '🤖'; break;
         case 'success': icon = '✅'; break;
         case 'error': icon = '❌'; break;
         default: icon = 'ℹ️';
     }
-    
+
     statusDetect.innerHTML = `<span class="status-icon">${icon}</span> <span class="status-message">${message}</span>`;
 }
 

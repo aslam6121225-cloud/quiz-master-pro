@@ -45,7 +45,7 @@ export async function showConfirmModal(title: string, description: string, icon:
     });
 }
 
-export async function showInfoModal(title: string, description: string, icon: string = 'ℹ️'): Promise<void> {
+export async function showInfoModal(title: string, description: string, icon: string = 'ℹ️', btnName: string = 'Acknowledge'): Promise<boolean> {
     return new Promise((resolve) => {
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -56,7 +56,7 @@ export async function showInfoModal(title: string, description: string, icon: st
                 <h2 class="modal-title">${title}</h2>
                 <p class="modal-description">${description}</p>
                 <div class="modal-actions">
-                    <button class="btn btn-primary" id="modal-ok" style="flex: 1;">Acknowledge</button>
+                    <button class="btn btn-primary" id="modal-ok" style="flex: 1;">${btnName}</button>
                 </div>
             </div>
         `;
@@ -67,13 +67,13 @@ export async function showInfoModal(title: string, description: string, icon: st
         
         btnOk?.addEventListener('click', () => {
             overlay.remove();
-            resolve();
+            resolve(true);
         });
         
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
                 overlay.remove();
-                resolve();
+                resolve(false);
             }
         });
     });

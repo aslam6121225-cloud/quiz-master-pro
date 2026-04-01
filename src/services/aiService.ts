@@ -49,164 +49,159 @@ const healJSON = (jsonBody: string) => {
         .replace(/,\s*\}/g, '}'); // Trailing comma in object
 };
 
-export async function generateQuizFromText(text: string, title: string, questionCount: number = 10, difficulty: string = 'mixed', weakTopics: string[] = []): Promise<QuizData> {
-    // 1. Content Extraction Layer
+let geminiLockoutUntil = 0;
+
+export async function generateQuizFromText(text: string, title: string, questionCount: number = 10, difficulty: string = 'mixed', weakTopics: string[] = [], isLite: boolean = false): Promise<QuizData> {
+    const updateTicker = (msg: string) => {
+        const ticker = document.getElementById('status-ticker');
+        if (ticker) ticker.textContent = msg.toUpperCase();
+    };
+
+    // 1. Content Extraction & Deep Clean (Chunking for Stability)
     const cleanText = text
-        .replace(/\f/g, '\n')
-        .replace(/(Page \d+ of \d+|Confidential|Footer:.*)/gi, '')
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 20)
-        .join(' ');
+        .replace(/[^a-zA-Z0-9 .?,]/g, '') // Strip everything except basic alpha-numeric
+        .substring(0, isLite ? 2500 : 4000);
 
     const subject = identifySubject(cleanText);
-    const geminiApiKey = "AIzaSyDpIhm1qygs0Rh9Zs4IyJ8oyJj2HfqERtc";
+    const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+    const hfToken = import.meta.env.VITE_HF_TOKEN || "";
+    const hfModel = "Qwen/Qwen2.5-7B-Instruct"; // Upgraded from Mistral-7B (deprecated on HF router)
 
-    // Layer 1: Force Raw JSON Mode (Hardened Prompting)
-    const difficultyRule = difficulty === 'easy-to-hard' ? "Start with fundamental questions and progressively increase complexity."
-        : difficulty === 'advanced' ? "Generate highly complex, senior-level analytical questions."
-        : "Provide a balanced mix of foundational and complex questions.";
+    const promptText = isLite 
+        ? `STRICT LITE-RETENTION: Generate exactly 3 simple conceptual multiple-choice questions from this text. Output raw JSON array only. Each object must have "text", "options" (4 items), "correctAnswer" (0-3), and "rationale".`
+        : `You are a Senior Technical Lead at a Multinational Enterprise. Your task is to generate exactly ${questionCount} 'Scenario-Based' high-complexity questions.
 
-    const remedialRule = weakTopics.length > 0 
-        ? `\nINSTITUTIONAL REMEDIATION: The student previously struggled with these conceptual areas: ${weakTopics.join(', ')}. Please generate targeted questions that specifically test and strengthen these weak points.`
-        : "";
-
-    const promptText = `You are an expert AI Academic Quiz Engine. 
-Generate exactly ${questionCount} high-quality, concept-based multiple-choice questions from the provided text.
-
-RULES:
-1. SCENARIOS-BASED ONLY: No fill-in-the-blank statements.
-2. 4 OPTIONS: Provide strong distractors.
-3. BALANCED DIFFICULTY: ${difficultyRule} ${remedialRule}
-4. INSTITUTIONAL SHIELD: Ignore document metadata, faculty names, or headers.
-
-CONCEPT INSIGHT (RATIONALE) PROTOCOL:
-- INVISIBLE OPTIONS RULE: When writing the 'rationale' field, you must act as if the multiple-choice options (distractors) DO NOT EXIST. Do not mention that there were other choices.
-- STANDALONE ACADEMIC FACT: The rationale must be a 100% standalone academic explanation of the FACT that makes the answer true. It must be derived directly from the text.
-- STRICT WORD BAN: You are PROHIBITED from using these words in the rationale: "Option", "Choice", "Correct", "Incorrect", "A", "B", "C", "D", "1", "2", "3", "0", "Selected", "Distractor", "Instead of", "Rather than". Use of these words triggers a protocol failure.
-
-GOLD STANDARD EXAMPLE:
-Topic: IoT Microgrids
-Correct Answer: Autonomous Control
-✅ REQUIRED RATIONALE: "Autonomous control in microgrids is achieved through decentralized software architectures that allow localized power distribution to self-correct and maintain stability even when disconnected from the main utility provider."
+STRICT DIRECTIVES:
+1. MNC-MASTERY: DO NOT ask simple 'What is...' questions. Use complex, real-world engineering or IoT scenarios.
+2. INSTITUTIONAL SHIELD: STRICTLY IGNORE all metadata (Faculty, Dept names, codes). Focus 100% on the technical technical content.
+3. RATIONALE HARDENING: The 'rationale' field must be a standalone academic explanation. You are FORBIDDEN from mentioning options (A, B, C, D) or saying 'Option X is correct'.
+4. OUTPUT FORMAT: Each object MUST include "text", "options", "correctAnswer", and "rationale".
 
 JSON SCHEMA:
 [
   {
-    "id": "q-1", "text": "...", "options": ["...", "...", "...", "..."], "correctAnswer": 0,
-    "explanation": "...", "reinforcement": "...", "rationale": "...", "difficulty": "accessible"
+    "text": "...", "options": ["...", "...", "...", "..."], "correctAnswer": 0, "rationale": "...", "difficulty": "advanced"
   }
-]
+]`;
 
-IMPORTANT: Return ONLY raw JSON. Do not include markdown backticks (\`\`\`json), do not include any introductory text, and ensure every comma is correctly placed. Output must be a valid JSON array of objects.
+    const finalPrompt = `${promptText}\n\nText Segment for Analysis:\n${cleanText}`;
 
-
-Text Segment:
-${cleanText.substring(0, 15000)}`; // Token optimization
-
-    let attempts = 0;
-    const maxAttempts = 2;
-
-    while (attempts < maxAttempts) {
+    // --- PHASE 1: PRIMARY (GEMINI 2.5 FLASH) ---
+    const now = Date.now();
+    if (now > geminiLockoutUntil) {
         try {
+            updateTicker(`Executing Primary Strategy (Gemini 2.5)...`);
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: promptText }] }],
+                    contents: [{ parts: [{ text: finalPrompt }] }],
                     generationConfig: { 
-                        responseMimeType: "application/json",
-                        temperature: 0.2 // Lowered for higher reliability in JSON output
+                        responseMimeType: "application/json", 
+                        temperature: isLite ? 0.3 : 0.7 
                     }
                 })
             });
 
-            if (!response.ok) throw new Error(`HTTP_${response.status}`);
+            if (response.status === 429) {
+                console.warn("Gemini Rate Limit. Pivoting to Mistral Engine.");
+                geminiLockoutUntil = Date.now() + 60000; // 60s Lockout
+                throw new Error("Gemini_Pivot_Required"); 
+            }
+
+            if (!response.ok) throw new Error(`Gemini_Protocol_Exception: ${response.status}`);
 
             const data = await response.json();
             const rawBody = data.candidates[0].content.parts[0].text;
             
-            // Layer 2 & 3: Clean and Heal
-            const cleanedJSON = cleanAIResponse(rawBody);
-            const healedJSON = healJSON(cleanedJSON);
-            
-            let aiQuestions: Question[] = JSON.parse(healedJSON);
-
-            // Post-processing
-            aiQuestions.forEach((q, idx) => {
-                q.id = `q-${idx}`;
-                const correctText = q.options[q.correctAnswer];
-                q.options.sort(() => 0.5 - Math.random());
-                q.correctAnswer = q.options.indexOf(correctText);
-            });
-
-            return {
-                title: title.replace('.pdf', ''),
-                subject,
-                questions: aiQuestions,
-                masteryPack: generateMasteryPack(subject),
-                createdAt: new Date().toISOString(),
-                questionCount: aiQuestions.length
+            const forceParse = (text: string) => {
+                const start = text.indexOf('[');
+                const end = text.lastIndexOf(']') + 1;
+                if (start === -1 || end === 0) throw new Error("No JSON array found");
+                return JSON.parse(text.substring(start, end));
             };
 
-        } catch (err) {
-            attempts++;
-            console.warn(`AI Synthesis Retry [${attempts}/${maxAttempts}]:`, err);
-            
-            if (attempts < maxAttempts) {
-                // Secondary "Healer" Retry with simpler prompt
-                await new Promise(r => setTimeout(r, 1000));
-                continue; 
-            }
+            const aiQuestions = forceParse(healJSON(rawBody));
+            return finalizeQuizBundle(aiQuestions, title, subject);
+
+        } catch (primaryErr) {
+            console.warn("Gemini Primary failure. Attempting Instant Pivot...", primaryErr);
         }
     }
 
-    // FINAL SILENT FALLBACK (Self-Healing Background Protocol)
-    console.info("AI Definitively Timed Out. Activating Heuristic Pattern Matcher...");
-    return heuristicFallback(cleanText, title, subject, questionCount);
+    // --- PHASE 2: INSTANT PIVOT (HUGGING FACE MISTRAL-7B) ---
+    try {
+        updateTicker("Secondary AI Engine (Qwen2.5) Engaged...");
+        
+        // OpenAI-compatible HuggingFace Router endpoint (new standard, replaces deprecated api-inference.huggingface.co)
+        const hfChatUrl = `https://router.huggingface.co/v1/chat/completions`;
+        
+        const hfResponse = await fetch(hfChatUrl, {
+            method: "POST",
+            headers: { 
+                "Authorization": `Bearer ${hfToken}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: hfModel,
+                messages: [{ role: "user", content: finalPrompt }],
+                max_tokens: 2000,
+                temperature: 0.2
+            })
+        });
+
+        if (!hfResponse.ok) {
+            const errText = await hfResponse.text();
+            throw new Error(`HuggingFace_Protocol_Exception: ${hfResponse.status} - ${errText}`);
+        }
+
+        const hfData = await hfResponse.json();
+        const responseText = hfData.choices[0].message.content;
+        
+        const forceParse = (text: string) => {
+            const start = text.indexOf('[');
+            const end = text.lastIndexOf(']') + 1;
+            if (start === -1 || end === 0) throw new Error("No JSON array found in HF response");
+            return JSON.parse(text.substring(start, end));
+        };
+
+        const aiQuestions = forceParse(healJSON(responseText));
+        return finalizeQuizBundle(aiQuestions, title, subject);
+
+    } catch (fallbackErr) {
+        console.error("Dual-AI Secondary Failure:", fallbackErr);
+        
+        if (!isLite) {
+            updateTicker("Primary Failure. Re-scaling to Lite Protocol...");
+            return generateQuizFromText(text, title, 3, 'mixed', [], true);
+        }
+        
+        throw new Error("STABILITY RE-CALIBRATION: Both AI engines are unavailable. Please check your API keys and try again.");
+    }
 }
 
 /**
- * The 'Healer' Fallback: Runs background pattern matching if AI fails all attempts.
+ * Standardized Output & Normalization
  */
-async function heuristicFallback(cleanText: string, title: string, subject: string, count: number): Promise<QuizData> {
-    const sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [];
-    const questions: Question[] = [];
-    const keywords = extractKeywords(cleanText);
-
-    for (let i = 0; i < sentences.length && questions.length < count; i++) {
-        const sentence = sentences[i].trim();
-        if (sentence.length < 50) continue;
-
-        const concepts = keywords.filter(k => sentence.toLowerCase().includes(k.toLowerCase()));
-        if (concepts.length === 0) continue;
-
-        const target = concepts[0];
-        const masked = sentence.replace(new RegExp(`\\b${target}\\b`, 'i'), '_____');
-        const distractors = keywords.filter(k => k !== target).slice(0, 3);
-
-        if (distractors.length < 3) continue;
-        const options = [target, ...distractors].sort(() => 0.5 - Math.random());
-
-        questions.push({
-            id: `q-${questions.length}`,
-            text: `Identify the missing core element: "${masked}"`,
-            options,
-            correctAnswer: options.indexOf(target),
-            explanation: `Corrective Analysis: The document definitively links this context to "${target}".`,
-            reinforcement: `Reinforcement: Excellent identification of the underlying concept.`,
-            rationale: `Structural linguistic analysis confirms the relationship between the context and "${target}".`,
-            difficulty: 'accessible'
-        });
-    }
+function finalizeQuizBundle(questions: any[], title: string, subject: string): QuizData {
+    const normalized = questions.map((q, idx) => ({
+        id: `q-${idx}`,
+        text: q.text || q.question, // Universal mapping
+        options: q.options,
+        correctAnswer: q.correctAnswer ?? q.answer,
+        explanation: q.rationale,
+        reinforcement: "MNC Mastery Verified.",
+        rationale: q.rationale,
+        difficulty: 'advanced' as const
+    }));
 
     return {
         title: title.replace('.pdf', ''),
         subject,
-        questions: questions.length > 0 ? questions : [],
+        questions: normalized,
         masteryPack: generateMasteryPack(subject),
         createdAt: new Date().toISOString(),
-        questionCount: questions.length
+        questionCount: normalized.length
     };
 }
 
